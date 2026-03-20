@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
+
+# PromptCraft
+
+An interactive web app to sharpen your Claude prompt engineering skills — with guided lessons, hands-on exercises, and instant AI-graded feedback.
+
+**Bring your own Anthropic API key. No accounts. No data leaves your browser.**
+
+<p>
+<a href="https://www.linkedin.com/in/sahar-mor/" target="_blank"><img src="https://img.shields.io/badge/LinkedIn-Connect-blue" alt="LinkedIn"></a>
+<a href="https://x.com/theaievangelist" target="_blank"><img src="https://img.shields.io/twitter/follow/:theaievangelist" alt="X"></a>
+<a href="http://aitidbits.ai/" target="_blank"><img src="https://github.com/saharmor/saharmor.github.io/blob/main/images/ai%20tidbits%20logo.png?raw=true" alt="Stay updated on AI" width="20" height="20" style="vertical-align: middle;"> Stay updated on AI</a>
+</p>
+
+</div>
+
+---
+
+## What is this?
+
+PromptCraft is a self-paced prompt engineering course inspired by Anthropic's own tutorial material, rebuilt as a proper web app. Work through 24 exercises across 12 chapters — from basic message structure to advanced hallucination prevention and multi-technique prompts. Each submission is graded live by Claude Sonnet using your own API key, with specific feedback on what worked and what to improve.
+
+## Curriculum
+
+| Level | Chapters |
+|---|---|
+| **Beginner** | Basic Prompt Structure · Being Clear & Direct · Assigning Roles |
+| **Intermediate** | Separating Data from Instructions · Formatting Output · Thinking Step by Step · Few-Shot Prompting |
+| **Advanced** | Avoiding Hallucinations · Complex Prompts for Industry Use Cases |
+| **Appendices** | Chaining Prompts · Tool Use · Search & Retrieval |
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repo and install dependencies:
+
+```bash
+npm install
+```
+
+2. Run the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Open [http://localhost:3000](http://localhost:3000), click the gear icon, and paste your [Anthropic API key](https://console.anthropic.com).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> Your API key is used only to grade submissions and is never stored on any server. You can optionally save it to your browser's localStorage for convenience.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploying
 
-## Learn More
+The app is designed for one-click deployment on Vercel. No environment variables are required — users supply their own API keys.
 
-To learn more about Next.js, take a look at the following resources:
+## Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Framework**: Next.js 16 (App Router)
+- **Styling**: Tailwind CSS + shadcn/ui
+- **LLM**: Anthropic Claude Sonnet (via user-supplied API key)
+- **Persistence**: Browser localStorage (progress + optional API key)
+- **Deployment**: Vercel
