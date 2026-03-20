@@ -1,6 +1,6 @@
 <div align="center">
 
-# PromptCraft
+# Prompt Claude
 
 An interactive web app to sharpen your Claude prompt engineering skills — with guided lessons, hands-on exercises, and instant AI-graded feedback.
 
@@ -46,15 +46,3 @@ npm run dev
 3. Open [http://localhost:3000](http://localhost:3000), click the gear icon, and paste your [Anthropic API key](https://console.anthropic.com).
 
 > Your API key is used only to grade submissions and is never stored on any server. You can optionally save it to your browser's localStorage for convenience.
-
-## Deploying
-
-The app is designed for one-click deployment on Vercel. No environment variables are required — users supply their own API keys.
-
-## Tech Stack
-
-- **Framework**: Next.js 16 (App Router)
-- **Styling**: Tailwind CSS + shadcn/ui
-- **LLM**: Anthropic Claude Sonnet (via user-supplied API key)
-- **Persistence**: Browser localStorage (progress + optional API key)
-- **Deployment**: Vercel
