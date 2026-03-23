@@ -15,7 +15,7 @@ import { trackEvent } from "@/lib/analytics";
 
 const STORAGE_KEY = "anthropic_api_key";
 const CONSENT_KEY = "anthropic_api_key_saved";
-const SETTINGS_CHANGE_EVENT = "promptclaude-settings-change";
+export const SETTINGS_CHANGE_EVENT = "promptclaude-settings-change";
 export const OPEN_SETTINGS_EVENT = "promptclaude-open-settings";
 
 interface StoredSettings {
@@ -75,9 +75,13 @@ function subscribeToStoredSettings(callback: () => void) {
   };
 }
 
-function notifyStoredSettingsChange() {
+function notifyStoredSettingsChange(hasApiKey: boolean) {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new Event(SETTINGS_CHANGE_EVENT));
+  window.dispatchEvent(
+    new CustomEvent(SETTINGS_CHANGE_EVENT, {
+      detail: { hasApiKey },
+    })
+  );
 }
 
 export function SettingsPanel() {
@@ -126,7 +130,7 @@ export function SettingsPanel() {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(CONSENT_KEY);
     }
-    notifyStoredSettingsChange();
+    notifyStoredSettingsChange(trimmed.length > 0);
     if (trimmed) {
       trackEvent("api_key_saved", {
         storage: saveConsent ? "local" : "session",
@@ -141,7 +145,7 @@ export function SettingsPanel() {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(CONSENT_KEY);
     sessionStorage.removeItem(STORAGE_KEY);
-    notifyStoredSettingsChange();
+    notifyStoredSettingsChange(false);
     setDraft(null);
     triggerSavedFeedback();
   }

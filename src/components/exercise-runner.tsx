@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FeedbackPanel } from "@/components/feedback-panel";
@@ -14,7 +14,10 @@ import {
 } from "@/lib/progress/storage";
 import { chapters } from "@/lib/curriculum/data";
 import type { Exercise, GradeResult } from "@/lib/curriculum/schema";
-import { OPEN_SETTINGS_EVENT } from "@/components/settings-panel";
+import {
+  OPEN_SETTINGS_EVENT,
+  SETTINGS_CHANGE_EVENT,
+} from "@/components/settings-panel";
 import { Award } from "lucide-react";
 import { ShareButtons, totalExercises, totalChapters } from "@/components/share-buttons";
 import { trackEvent, trackEventOnce } from "@/lib/analytics";
@@ -45,6 +48,7 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
   const [lastAttemptPassed, setLastAttemptPassed] = useState<boolean | null>(null);
   const [showCourseComplete, setShowCourseComplete] = useState(false);
   const confettiFiredRef = useRef(false);
+  const pendingSubmitAfterSettingsRef = useRef(false);
 
   useEffect(() => {
     const prev = getAttempt(chapterSlug, exercise.id);
@@ -80,6 +84,29 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
     }
   }, [showCourseComplete]);
 
+  useEffect(() => {
+    function handleSettingsChange(event: Event) {
+      if (!pendingSubmitAfterSettingsRef.current) return;
+
+      const hasApiKey =
+        event instanceof CustomEvent &&
+        typeof event.detail?.hasApiKey === "boolean"
+          ? event.detail.hasApiKey
+          : Boolean(getApiKey());
+
+      if (!hasApiKey) return;
+
+      pendingSubmitAfterSettingsRef.current = false;
+      setError(null);
+      void handleSubmit();
+    }
+
+    window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+    return () => {
+      window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+    };
+  }, [prompt, chapterSlug, exercise.id]);
+
   async function handleSubmit() {
     if (!prompt.trim()) return;
 
@@ -90,6 +117,7 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
     try {
       const apiKey = getApiKey();
       if (!apiKey) {
+        pendingSubmitAfterSettingsRef.current = true;
         setError("no-api-key");
         setIsGrading(false);
         return;
@@ -152,6 +180,17 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setIsGrading(false);
+    }
+  }
+
+  function handlePromptKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== "Enter" || (!event.metaKey && !event.ctrlKey)) {
+      return;
+    }
+
+    event.preventDefault();
+    if (!isGrading && prompt.trim()) {
+      void handleSubmit();
     }
   }
 
@@ -218,6 +257,7 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
           id="prompt-editor"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={handlePromptKeyDown}
           placeholder="Write your prompt here..."
           className="min-h-[160px] font-mono text-sm bg-card resize-y"
         />
@@ -242,6 +282,9 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
         >
           {showHints ? "Hide hints" : "Show hints"}
         </button>
+        <span className="text-xs text-muted-foreground">
+          Cmd/Ctrl + Enter to submit
+        </span>
       </div>
 
       {/* Hints */}
@@ -266,7 +309,10 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
             <>
               Please set your Anthropic API key first. Click the{" "}
               <button
-                onClick={() => window.dispatchEvent(new Event(OPEN_SETTINGS_EVENT))}
+                onClick={() => {
+                  pendingSubmitAfterSettingsRef.current = true;
+                  window.dispatchEvent(new Event(OPEN_SETTINGS_EVENT));
+                }}
                 className="underline font-medium hover:opacity-80 transition-opacity cursor-pointer"
               >
                 gear icon

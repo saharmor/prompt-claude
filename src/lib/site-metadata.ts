@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { chapters } from "@/lib/curriculum/data";
-import type { Chapter, Exercise } from "@/lib/curriculum/schema";
+import type { Chapter } from "@/lib/curriculum/schema";
 
 export const siteName = "Prompt Claude";
 export const siteTagline = "Master Claude Prompt Engineering";
@@ -78,8 +78,4 @@ export function getChapterDescription(chapter: Chapter) {
   const exerciseLabel = chapter.exercises.length === 1 ? "exercise" : "exercises";
 
   return `Learn ${chapter.title} in Prompt Claude. Explore ${concepts} and practice with ${chapter.exercises.length} ${exerciseLabel}.`;
-}
-
-export function getExerciseDescription(chapter: Chapter, exercise: Exercise) {
-  return `Practice ${exercise.title} from ${chapter.title} in Prompt Claude. ${exercise.description}`;
 }

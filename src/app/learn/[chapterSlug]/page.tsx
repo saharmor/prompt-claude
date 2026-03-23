@@ -5,7 +5,12 @@ import { chapters, getChapter } from "@/lib/curriculum/data";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { MarkdownContent } from "@/components/markdown-content";
-import { createMetadata, getChapterDescription, siteName } from "@/lib/site-metadata";
+import { InlineExercises } from "@/components/inline-exercises";
+import {
+  createMetadata,
+  getChapterDescription,
+  siteName,
+} from "@/lib/site-metadata";
 
 interface Props {
   params: Promise<{ chapterSlug: string }>;
@@ -78,31 +83,13 @@ export default async function ChapterPage({ params }: Props) {
 
       <Separator className="my-8" />
 
-      {/* Exercises */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Exercises</h2>
-        <div className="flex flex-col gap-3">
-          {chapter.exercises.map((exercise, idx) => (
-            <Link
-              key={exercise.id}
-              href={`/learn/${chapter.slug}/${exercise.id}`}
-              className="group flex items-start gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-accent/40"
-            >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                {idx + 1}
-              </span>
-              <div>
-                <h3 className="font-medium group-hover:text-primary transition-colors">
-                  {exercise.title}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                  {exercise.description}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
+      {/* Inline Exercises */}
+      <InlineExercises
+        exercises={chapter.exercises}
+        chapterSlug={chapter.slug}
+        nextChapterSlug={nextChapter?.slug}
+        nextChapterTitle={nextChapter?.title}
+      />
 
       {/* Chapter navigation */}
       <div className="mt-10 flex items-center justify-between">

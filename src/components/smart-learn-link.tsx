@@ -49,12 +49,12 @@ function resolveLearnHref(
     };
   }
 
-  // Resume at the first incomplete exercise.
+  // Resume at the chapter that contains the first incomplete exercise.
   for (const chapter of orderedChapters) {
     for (const exercise of chapter.exercises) {
       if (!data.attempts[`${chapter.slug}/${exercise.id}`]?.passed) {
         return {
-          href: `/learn/${chapter.slug}/${exercise.id}`,
+          href: `/learn/${chapter.slug}`,
           hasProgress: true,
         };
       }
