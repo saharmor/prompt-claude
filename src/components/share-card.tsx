@@ -81,7 +81,7 @@ export function ShareCard() {
               <strong>{totalChapters} chapters</strong> of Claude prompt engineering.
             </p>
           </div>
-          <ShareButtons />
+          <ShareButtons surface="curriculum_share_card" />
         </div>
       </div>
     </div>

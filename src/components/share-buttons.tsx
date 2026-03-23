@@ -8,6 +8,7 @@ import {
   FacebookIcon,
   RedditIcon,
 } from "react-share";
+import { trackEvent } from "@/lib/analytics";
 import { siteName } from "@/lib/site-metadata";
 import { chapters } from "@/lib/curriculum/data";
 
@@ -16,6 +17,10 @@ export const totalChapters = chapters.length;
 
 const shareText = `I just completed the ${siteName} course — all ${totalExercises} exercises across ${totalChapters} chapters of Claude prompt engineering.`;
 const fallbackShareUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+
+interface Props {
+  surface: "course_complete_overlay" | "curriculum_share_card";
+}
 
 function subscribeToShareUrl() {
   return () => {};
@@ -26,7 +31,7 @@ function getShareUrlSnapshot() {
   return fallbackShareUrl || window.location.origin;
 }
 
-export function ShareButtons() {
+export function ShareButtons({ surface }: Props) {
   const url = useSyncExternalStore(
     subscribeToShareUrl,
     getShareUrlSnapshot,
@@ -41,7 +46,12 @@ export function ShareButtons() {
         Share on
       </p>
       <div className="flex items-center gap-3">
-        <XShareButton url={url} title={shareText} aria-label="Share on X">
+        <XShareButton
+          url={url}
+          title={shareText}
+          aria-label="Share on X"
+          onClick={() => trackEvent("share_clicked", { platform: "x", surface })}
+        >
           <XIcon size={44} borderRadius={12} />
         </XShareButton>
 
@@ -49,6 +59,9 @@ export function ShareButtons() {
           url={url}
           hashtag="#claudeai"
           aria-label="Share on Facebook"
+          onClick={() =>
+            trackEvent("share_clicked", { platform: "facebook", surface })
+          }
         >
           <FacebookIcon size={44} borderRadius={12} />
         </FacebookShareButton>
@@ -58,6 +71,9 @@ export function ShareButtons() {
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Share on Reddit"
+          onClick={() =>
+            trackEvent("share_clicked", { platform: "reddit", surface })
+          }
         >
           <RedditIcon size={44} borderRadius={12} />
         </a>

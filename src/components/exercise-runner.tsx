@@ -6,17 +6,29 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FeedbackPanel } from "@/components/feedback-panel";
 import { ModelAnswer } from "@/components/model-answer";
-import { saveAttempt, getAttempt, isAllComplete } from "@/lib/progress/storage";
+import {
+  saveAttempt,
+  getAttempt,
+  getChapterProgress,
+  isAllComplete,
+} from "@/lib/progress/storage";
 import { chapters } from "@/lib/curriculum/data";
 import type { Exercise, GradeResult } from "@/lib/curriculum/schema";
 import { OPEN_SETTINGS_EVENT } from "@/components/settings-panel";
 import { Award } from "lucide-react";
 import { ShareButtons, totalExercises, totalChapters } from "@/components/share-buttons";
+import { trackEvent, trackEventOnce } from "@/lib/analytics";
 
 const allChaptersForCompletion = chapters.map((ch) => ({
   slug: ch.slug,
   exerciseIds: ch.exercises.map((e) => e.id),
 }));
+const chapterExerciseIdsBySlug = new Map(
+  chapters.map((chapter) => [
+    chapter.slug,
+    chapter.exercises.map((exercise) => exercise.id),
+  ])
+);
 
 interface Props {
   exercise: Exercise;
@@ -24,6 +36,7 @@ interface Props {
 }
 
 export function ExerciseRunner({ exercise, chapterSlug }: Props) {
+  const exerciseKey = `${chapterSlug}/${exercise.id}`;
   const [prompt, setPrompt] = useState(exercise.starterPrompt ?? "");
   const [isGrading, setIsGrading] = useState(false);
   const [result, setResult] = useState<GradeResult | null>(null);
@@ -102,6 +115,15 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
       setResult(data);
       setLastAttemptPassed(data.passed);
 
+      const chapterExerciseIds = chapterExerciseIdsBySlug.get(chapterSlug) ?? [
+        exercise.id,
+      ];
+      const chapterProgressBefore = getChapterProgress(
+        chapterSlug,
+        chapterExerciseIds
+      );
+      const wasCourseComplete = isAllComplete(allChaptersForCompletion);
+
       saveAttempt({
         exerciseId: exercise.id,
         chapterSlug,
@@ -110,7 +132,20 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
         submittedAt: new Date().toISOString(),
       });
 
-      if (data.passed && isAllComplete(allChaptersForCompletion)) {
+      trackEvent("exercise_graded", {
+        exercise: exerciseKey,
+        passed: data.passed,
+      });
+
+      const chapterProgressAfter = getChapterProgress(chapterSlug, chapterExerciseIds);
+      if (!chapterProgressBefore.allPassed && chapterProgressAfter.allPassed) {
+        trackEvent("chapter_completed", {
+          chapter_slug: chapterSlug,
+        });
+      }
+
+      if (data.passed && !wasCourseComplete && isAllComplete(allChaptersForCompletion)) {
+        trackEvent("course_completed");
         setShowCourseComplete(true);
       }
     } catch (err) {
@@ -138,7 +173,7 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
                 </p>
               </div>
 
-              <ShareButtons />
+              <ShareButtons surface="course_complete_overlay" />
 
               <button
                 onClick={() => setShowCourseComplete(false)}
@@ -194,7 +229,15 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
           {isGrading ? "Grading..." : "Submit for Grading"}
         </Button>
         <button
-          onClick={() => setShowHints(!showHints)}
+          onClick={() => {
+            if (!showHints && exercise.hints.length > 0) {
+              trackEventOnce("hints_revealed", `hints:${exerciseKey}`, {
+                exercise: exerciseKey,
+              });
+            }
+
+            setShowHints(!showHints);
+          }}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           {showHints ? "Hide hints" : "Show hints"}
@@ -240,7 +283,7 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
       {result && <FeedbackPanel result={result} />}
 
       {/* Model Answer */}
-      <ModelAnswer answer={exercise.modelAnswer} />
+      <ModelAnswer answer={exercise.modelAnswer} exerciseKey={exerciseKey} />
     </div>
   );
 }

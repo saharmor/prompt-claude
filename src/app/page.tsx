@@ -47,7 +47,10 @@ export default function Home() {
             </a>
           </p>
           <div className="flex gap-3 pt-2">
-            <SmartLearnLink className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80" />
+            <SmartLearnLink
+              className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+              analyticsPlacement="hero"
+            />
             <Link
               href="/learn#curriculum"
               className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted"
@@ -124,6 +127,7 @@ export default function Home() {
           startLabel="Browse the Curriculum"
           resumeLabel="Resume Learning"
           startHref="/learn#curriculum"
+          analyticsPlacement="footer_cta"
         />
       </section>
     </div>

@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { chapters } from "@/lib/curriculum/data";
+import { trackEvent } from "@/lib/analytics";
 import { loadProgress, PROGRESS_CHANGE_EVENT } from "@/lib/progress/storage";
 
 const orderedChapters = [
@@ -69,6 +70,7 @@ interface Props {
   startLabel?: string;
   resumeLabel?: string;
   startHref?: string;
+  analyticsPlacement?: string;
 }
 
 function serializeResolvedLink(snapshot: {
@@ -83,6 +85,7 @@ export function SmartLearnLink({
   startLabel = "Start Learning",
   resumeLabel = "Resume Learning",
   startHref = orderedChapters.length > 0 ? `/learn/${orderedChapters[0].slug}` : "/learn",
+  analyticsPlacement = "unknown",
 }: Props) {
   const resolvedSnapshot = useSyncExternalStore(
     subscribeToProgress,
@@ -95,7 +98,16 @@ export function SmartLearnLink({
   const label = hasProgress ? resumeLabel : startLabel;
 
   return (
-    <Link href={href} className={className}>
+    <Link
+      href={href}
+      className={className}
+      onClick={() =>
+        trackEvent("cta_learn_click", {
+          placement: analyticsPlacement,
+          has_progress: hasProgress,
+        })
+      }
+    >
       {label}
     </Link>
   );

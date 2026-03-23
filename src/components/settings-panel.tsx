@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { trackEvent } from "@/lib/analytics";
 
 const STORAGE_KEY = "anthropic_api_key";
 const CONSENT_KEY = "anthropic_api_key_saved";
@@ -126,6 +127,11 @@ export function SettingsPanel() {
       localStorage.removeItem(CONSENT_KEY);
     }
     notifyStoredSettingsChange();
+    if (trimmed) {
+      trackEvent("api_key_saved", {
+        storage: saveConsent ? "local" : "session",
+      });
+    }
     setDraft(null);
     triggerSavedFeedback();
     setOpen(false);

@@ -1,8 +1,11 @@
 <div align="center">
 
-# Prompt Claude
+<h1>
+  <img src="public/claude-logo.svg" alt="Claude logo" width="24" />
+  Prompt Claude
+</h1>
 
-An interactive web app to sharpen your Claude prompt engineering skills — with guided lessons, hands-on exercises, and instant AI-graded feedback.
+An interactive web app to sharpen your Claude prompt engineering skills, with guided lessons, hands-on exercises, and instant AI-graded feedback.
 
 **Bring your own Anthropic API key. No app accounts.**
 
