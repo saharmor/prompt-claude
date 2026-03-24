@@ -8,8 +8,24 @@ function notifyProgressChange() {
   window.dispatchEvent(new Event(PROGRESS_CHANGE_EVENT));
 }
 
+function getExerciseKey(chapterSlug: string, exerciseId: string): string {
+  return `${chapterSlug}/${exerciseId}`;
+}
+
 function createEmpty(): ProgressData {
-  return { __version: CURRENT_VERSION, attempts: {} };
+  return { __version: CURRENT_VERSION, attempts: {}, submittedPrompts: {} };
+}
+
+function normalizeProgress(data: ProgressData): ProgressData {
+  return {
+    __version: CURRENT_VERSION,
+    attempts: data.attempts ?? {},
+    submittedPrompts: data.submittedPrompts ?? {},
+  };
+}
+
+function saveProgress(data: ProgressData): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
 export function loadProgress(): ProgressData {
@@ -25,7 +41,7 @@ export function loadProgress(): ProgressData {
       return createEmpty();
     }
 
-    return data;
+    return normalizeProgress(data);
   } catch {
     return createEmpty();
   }
@@ -33,11 +49,11 @@ export function loadProgress(): ProgressData {
 
 export function saveAttempt(attempt: ExerciseAttempt): void {
   const data = loadProgress();
-  const key = `${attempt.chapterSlug}/${attempt.exerciseId}`;
+  const key = getExerciseKey(attempt.chapterSlug, attempt.exerciseId);
 
   data.attempts[key] = attempt;
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  saveProgress(data);
   notifyProgressChange();
 }
 
@@ -46,7 +62,25 @@ export function getAttempt(
   exerciseId: string
 ): ExerciseAttempt | null {
   const data = loadProgress();
-  return data.attempts[`${chapterSlug}/${exerciseId}`] ?? null;
+  return data.attempts[getExerciseKey(chapterSlug, exerciseId)] ?? null;
+}
+
+export function saveSubmittedPrompt(
+  chapterSlug: string,
+  exerciseId: string,
+  prompt: string
+): void {
+  const data = loadProgress();
+  data.submittedPrompts[getExerciseKey(chapterSlug, exerciseId)] = prompt;
+  saveProgress(data);
+}
+
+export function getSubmittedPrompt(
+  chapterSlug: string,
+  exerciseId: string
+): string | null {
+  const data = loadProgress();
+  return data.submittedPrompts[getExerciseKey(chapterSlug, exerciseId)] ?? null;
 }
 
 export function getChapterProgress(
@@ -57,7 +91,7 @@ export function getChapterProgress(
   let completed = 0;
 
   for (const id of exerciseIds) {
-    const attempt = data.attempts[`${chapterSlug}/${id}`];
+    const attempt = data.attempts[getExerciseKey(chapterSlug, id)];
     if (attempt?.passed) completed++;
   }
 
@@ -75,7 +109,7 @@ export function isAllComplete(
 
   for (const ch of chapters) {
     for (const id of ch.exerciseIds) {
-      const attempt = data.attempts[`${ch.slug}/${id}`];
+      const attempt = data.attempts[getExerciseKey(ch.slug, id)];
       if (!attempt?.passed) return false;
     }
   }

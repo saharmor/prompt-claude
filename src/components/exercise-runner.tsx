@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef, type KeyboardEvent } from "react";
+import { useState, useEffect, useRef, useCallback, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FeedbackPanel } from "@/components/feedback-panel";
@@ -9,6 +9,8 @@ import { ModelAnswer } from "@/components/model-answer";
 import {
   saveAttempt,
   getAttempt,
+  getSubmittedPrompt,
+  saveSubmittedPrompt,
   getChapterProgress,
   isAllComplete,
 } from "@/lib/progress/storage";
@@ -51,13 +53,18 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
   const pendingSubmitAfterSettingsRef = useRef(false);
 
   useEffect(() => {
+    const savedPrompt = getSubmittedPrompt(chapterSlug, exercise.id);
+    setPrompt(savedPrompt ?? exercise.starterPrompt ?? "");
+
     const prev = getAttempt(chapterSlug, exercise.id);
     if (prev) {
       setLastAttemptPassed(prev.passed);
+      setResult(prev.result ?? null);
     } else {
       setLastAttemptPassed(null);
+      setResult(null);
     }
-  }, [chapterSlug, exercise.id]);
+  }, [chapterSlug, exercise.id, exercise.starterPrompt]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -84,30 +91,7 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
     }
   }, [showCourseComplete]);
 
-  useEffect(() => {
-    function handleSettingsChange(event: Event) {
-      if (!pendingSubmitAfterSettingsRef.current) return;
-
-      const hasApiKey =
-        event instanceof CustomEvent &&
-        typeof event.detail?.hasApiKey === "boolean"
-          ? event.detail.hasApiKey
-          : Boolean(getApiKey());
-
-      if (!hasApiKey) return;
-
-      pendingSubmitAfterSettingsRef.current = false;
-      setError(null);
-      void handleSubmit();
-    }
-
-    window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
-    return () => {
-      window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
-    };
-  }, [prompt, chapterSlug, exercise.id]);
-
-  async function handleSubmit() {
+  const handleSubmit = useCallback(async () => {
     if (!prompt.trim()) return;
 
     setIsGrading(true);
@@ -122,6 +106,8 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
         setIsGrading(false);
         return;
       }
+
+      saveSubmittedPrompt(chapterSlug, exercise.id, prompt);
 
       const res = await fetch("/api/grade", {
         method: "POST",
@@ -158,6 +144,7 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
         passed: data.passed,
         score: data.score,
         submittedAt: new Date().toISOString(),
+        result: data,
       });
 
       trackEvent("exercise_graded", {
@@ -181,7 +168,30 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
     } finally {
       setIsGrading(false);
     }
-  }
+  }, [chapterSlug, exercise.id, exerciseKey, prompt]);
+
+  useEffect(() => {
+    function handleSettingsChange(event: Event) {
+      if (!pendingSubmitAfterSettingsRef.current) return;
+
+      const hasApiKey =
+        event instanceof CustomEvent &&
+        typeof event.detail?.hasApiKey === "boolean"
+          ? event.detail.hasApiKey
+          : Boolean(getApiKey());
+
+      if (!hasApiKey) return;
+
+      pendingSubmitAfterSettingsRef.current = false;
+      setError(null);
+      void handleSubmit();
+    }
+
+    window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+    return () => {
+      window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+    };
+  }, [handleSubmit]);
 
   function handlePromptKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key !== "Enter" || (!event.metaKey && !event.ctrlKey)) {
