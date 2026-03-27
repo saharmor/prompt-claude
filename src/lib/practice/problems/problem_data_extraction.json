@@ -1,0 +1,68 @@
+{
+  "id": "problem-data-extraction",
+  "title": "Structured Data Extraction",
+  "description": "You are writing the full prompt for a model that receives messy vendor invoice text. The model must extract the important fields into a strict JSON object. The hidden evaluator cares about schema compliance, normalized values, and whether missing fields are represented consistently rather than hallucinated.",
+  "input_format": "The input is raw OCR-like invoice text. Values may appear out of order, contain noise, or include multiple line items.",
+  "evaluator_expectation": "Return valid JSON only. The evaluator checks for the required keys, line item extraction, correct numeric types, and whether missing values are explicit nulls rather than invented data.",
+  "starter_prompt": "",
+  "input_wrapper_template": "\n\n<input>\n{input}\n</input>",
+  "sample_cases": [
+    {
+      "id": "visible-1",
+      "name": "Simple invoice",
+      "input_data": "Invoice 8891\nVendor: Northwind Office Supply\nDate: 2026-02-17\nCurrency USD\n3 x Ergonomic Chair @ 145.00 = 435.00\n1 x Standing Desk @ 399.00 = 399.00\nTotal Due: 834.00",
+      "expected_output": "{\n  \"invoice_id\": \"8891\",\n  \"vendor_name\": \"Northwind Office Supply\",\n  \"invoice_date\": \"2026-02-17\",\n  \"currency\": \"USD\",\n  \"total_amount\": 834.0,\n  \"line_items\": [\n    {\n      \"description\": \"Ergonomic Chair\",\n      \"quantity\": 3,\n      \"unit_price\": 145.0,\n      \"amount\": 435.0\n    },\n    {\n      \"description\": \"Standing Desk\",\n      \"quantity\": 1,\n      \"unit_price\": 399.0,\n      \"amount\": 399.0\n    }\n  ]\n}",
+      "notes": "Baseline visible case."
+    }
+  ],
+  "hidden_cases": [
+    {
+      "id": "hidden-1",
+      "name": "Messy OCR invoice",
+      "input_data": "AP INV ## 5530 // date march 03 2026\nseller: Evergreen Labs\n line a : pilot subscription 12 seats 59 usd ea total 708 usd\n tax included // grand total usd 708",
+      "expected_output": "",
+      "notes": "Noise-heavy OCR style input.",
+      "hidden": true
+    },
+    {
+      "id": "hidden-2",
+      "name": "Invoice with missing fields",
+      "input_data": "REF: unknown\nVendor: ???\nDate: not specified\nItems:\n  Consulting hours - 40h @ 150/hr\nNote: no total provided, currency unclear",
+      "expected_output": "",
+      "notes": "Tests null handling for missing fields.",
+      "hidden": true
+    }
+  ],
+  "validators": [
+    {
+      "kind": "json_schema",
+      "label": "Invoice JSON schema",
+      "config": {
+        "schema": {
+          "type": "object",
+          "required": ["invoice_id", "vendor_name", "invoice_date", "currency", "total_amount", "line_items"],
+          "properties": {
+            "invoice_id": { "type": ["string", "null"] },
+            "vendor_name": { "type": ["string", "null"] },
+            "invoice_date": { "type": ["string", "null"] },
+            "currency": { "type": ["string", "null"] },
+            "total_amount": { "type": ["number", "null"] },
+            "line_items": { "type": "array", "minItems": 1 }
+          }
+        }
+      }
+    },
+    {
+      "kind": "regex",
+      "label": "Output is pure JSON (no wrapper text)",
+      "config": {
+        "pattern": "^\\s*\\{",
+        "multiline": false,
+        "failure_message": "Output should start with { - return only the JSON object, no surrounding explanation."
+      }
+    }
+  ],
+  "evaluator_hook": "data_extraction_hook",
+  "tags": ["json", "extraction"],
+  "created_by_user": false
+}

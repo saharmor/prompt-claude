@@ -43,6 +43,12 @@ const footerSections = [
         description: "Browse all chapters, exercises, and difficulty levels.",
         external: false,
       },
+      {
+        href: "/practice",
+        label: "Practice",
+        description: "Use the prompt simulator to test open-ended prompts and hidden checks.",
+        external: false,
+      },
     ],
   },
   {

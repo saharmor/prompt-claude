@@ -1,0 +1,75 @@
+{
+  "id": "problem-tool-simulation",
+  "title": "Agent Tool-Calling Simulation",
+  "description": "Create a prompt that turns the model into a lightweight planning agent. The model will receive a user request plus a small tool catalog and should decide what tool call to make before returning a final answer. This mirrors interview questions where structure, explicit planning, and clean tool arguments matter more than writing code.",
+  "input_format": "The input includes a user request and a fixed tool catalog. The model should not invent tools that are not in the catalog.",
+  "evaluator_expectation": "The response must contain a plan, exactly one tool_call block with structured arguments, and a final answer. The hidden evaluator checks whether the selected tool is plausible, arguments are valid JSON, and the output is easy to parse.",
+  "starter_prompt": "",
+  "input_wrapper_template": "\n\n<tool_catalog>\n- create_ticket(title, description, priority)\n- search_docs(query)\n- schedule_meeting(title, attendees, time)\n</tool_catalog>\n<input>\n{input}\n</input>",
+  "sample_cases": [
+    {
+      "id": "visible-1",
+      "name": "Support escalation",
+      "input_data": "User request: Please log a high-priority ticket for our finance team because month-end exports are failing for EU accounts.",
+      "expected_output": "<plan>\nUse the ticket tool because the user explicitly wants an issue logged.\n</plan>\n<tool_call>\n  <name>create_ticket</name>\n  <arguments>{\"title\": \"Month-end exports failing for EU accounts\", \"description\": \"Finance team reports failed month-end exports for EU accounts.\", \"priority\": \"high\"}</arguments>\n</tool_call>\n<final_answer>\nI would create a high-priority ticket for the finance team and include the export failure details.\n</final_answer>",
+      "notes": "Visible tool choice case."
+    }
+  ],
+  "hidden_cases": [
+    {
+      "id": "hidden-1",
+      "name": "Search docs request",
+      "input_data": "User request: Find the internal onboarding documentation for partner API authentication so I can share it with a new engineer.",
+      "expected_output": "",
+      "notes": "Hidden tool selection case.",
+      "hidden": true
+    },
+    {
+      "id": "hidden-2",
+      "name": "Ambiguous multi-step request",
+      "input_data": "User request: Set up a meeting with the platform team next Tuesday at 2pm to discuss the outage, and also file a post-mortem ticket.",
+      "expected_output": "",
+      "notes": "Tests whether model picks exactly one tool and plans clearly when multiple seem relevant.",
+      "hidden": true
+    }
+  ],
+  "validators": [
+    {
+      "kind": "xml_required_tags",
+      "label": "Required XML blocks",
+      "config": {
+        "required_tags": ["plan", "tool_call", "name", "arguments", "final_answer"]
+      }
+    },
+    {
+      "kind": "regex",
+      "label": "Arguments contain valid JSON",
+      "config": {
+        "pattern": "<arguments>\\s*\\{[^}]+\\}\\s*</arguments>",
+        "multiline": true,
+        "failure_message": "The <arguments> block must contain a JSON object with key-value pairs."
+      }
+    },
+    {
+      "kind": "regex",
+      "label": "Tool name is from catalog",
+      "config": {
+        "pattern": "<name>\\s*(create_ticket|search_docs|schedule_meeting)\\s*</name>",
+        "multiline": true,
+        "failure_message": "The tool name must be one of: create_ticket, search_docs, schedule_meeting."
+      }
+    },
+    {
+      "kind": "regex",
+      "label": "Plan explains reasoning",
+      "config": {
+        "pattern": "<plan>[\\s\\S]{30,}</plan>",
+        "multiline": true,
+        "failure_message": "The <plan> should explain why the chosen tool is appropriate."
+      }
+    }
+  ],
+  "evaluator_hook": "tool_plan_hook",
+  "tags": ["agent", "tools"],
+  "created_by_user": false
+}

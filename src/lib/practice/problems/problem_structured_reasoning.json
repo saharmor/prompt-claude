@@ -1,0 +1,66 @@
+{
+  "id": "problem-structured-reasoning",
+  "title": "Structured Reasoning With Evidence",
+  "description": "Design a prompt that receives a customer support incident timeline and makes the model analyze the likely root cause without guessing. The response should separate evidence, reasoning, and conclusion clearly: include quoted evidence from the timeline, a reasoning section that explains how the evidence supports the conclusion, and a final answer with the most likely root cause, confidence level, and next action.",
+  "input_format": "The input is a chronological incident log with timestamps, status changes, and support notes.",
+  "evaluator_expectation": "The response must include XML sections for quoted evidence, reasoning, and final answer. The conclusion should identify the most likely cause, confidence, and next action. Quotes must reference actual input data.",
+  "starter_prompt": "",
+  "input_wrapper_template": "\n\n<context>\nYou are solving an interview-style debugging prompt.\n</context>\n<input>\n{input}\n</input>",
+  "sample_cases": [
+    {
+      "id": "visible-1",
+      "name": "API timeout incident",
+      "input_data": "09:00 deploy started\n09:07 deploy completed\n09:12 alerts fired for checkout latency\n09:14 support note: only EU region impacted\n09:18 infra note: database CPU normal\n09:20 infra note: cache miss rate spiked from 3% to 48%\n09:24 rollback completed\n09:27 latency recovered",
+      "expected_output": "<quotes>\n  <quote>09:20 infra note: cache miss rate spiked from 3% to 48%</quote>\n</quotes>\n<reasoning>\n  ...\n</reasoning>\n<final_answer>\n  <root_cause>Cache configuration regression after deploy</root_cause>\n  <confidence>high</confidence>\n  <next_action>Inspect deployment diff for cache invalidation or routing changes</next_action>\n</final_answer>",
+      "notes": "Visible reasoning case."
+    }
+  ],
+  "hidden_cases": [
+    {
+      "id": "hidden-1",
+      "name": "Billing queue slowdown",
+      "input_data": "11:00 queue depth 20\n11:08 queue depth 450\n11:10 note: background worker release finished at 11:05\n11:11 note: no DB saturation\n11:13 note: retries doubled after release\n11:25 rollback worker release\n11:31 queue depth back to 22",
+      "expected_output": "",
+      "notes": "Hidden evaluator case.",
+      "hidden": true
+    },
+    {
+      "id": "hidden-2",
+      "name": "Login failures spike",
+      "input_data": "14:00 auth service healthy\n14:12 CDN cert rotation completed\n14:15 error rate jumped from 0.1% to 12%\n14:16 support note: users see SSL errors on login page\n14:18 infra note: new cert has wrong SAN entries\n14:22 cert re-issued with correct SANs\n14:25 error rate back to 0.2%",
+      "expected_output": "",
+      "notes": "Tests whether reasoning correctly links cert rotation to SSL errors.",
+      "hidden": true
+    }
+  ],
+  "validators": [
+    {
+      "kind": "xml_required_tags",
+      "label": "Required XML structure",
+      "config": {
+        "required_tags": ["quotes", "quote", "reasoning", "final_answer", "root_cause", "confidence", "next_action"]
+      }
+    },
+    {
+      "kind": "regex",
+      "label": "Confidence is a valid level",
+      "config": {
+        "pattern": "<confidence>\\s*(high|medium|low)\\s*</confidence>",
+        "multiline": true,
+        "failure_message": "Confidence must be one of: high, medium, low."
+      }
+    },
+    {
+      "kind": "regex",
+      "label": "Reasoning section has substance",
+      "config": {
+        "pattern": "<reasoning>[\\s\\S]{80,}</reasoning>",
+        "multiline": true,
+        "failure_message": "The reasoning section should contain a meaningful analysis (at least a few sentences)."
+      }
+    }
+  ],
+  "evaluator_hook": "structured_reasoning_hook",
+  "tags": ["reasoning", "xml"],
+  "created_by_user": false
+}

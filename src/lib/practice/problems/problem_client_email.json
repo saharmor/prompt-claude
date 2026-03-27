@@ -1,0 +1,67 @@
+{
+  "id": "problem-client-email",
+  "title": "Client-Facing Output",
+  "description": "Write the complete prompt for a model that receives technical incident details and must draft a client-ready update. The update needs to balance transparency, calm tone, and actionable next steps while avoiding internal jargon leakage.",
+  "input_format": "The input includes internal incident notes, mitigation progress, and one or more client concerns.",
+  "evaluator_expectation": "The output must be wrapped in XML tags for subject and body. It should include a clear next step, avoid mentioning hidden internal-only details directly, and address every client concern listed in the input.",
+  "starter_prompt": "",
+  "input_wrapper_template": "\n\n<input>\n{input}\n</input>",
+  "input_variable_name": "INCIDENT_LOG",
+  "sample_cases": [
+    {
+      "id": "visible-1",
+      "name": "Customer reporting delayed dashboards",
+      "input_data": "Internal notes:\n- ingestion lag peaked at 42 minutes after a misconfigured worker deploy\n- rollback completed\n- backfill is 75% complete\nClient concerns:\n- dashboard data is stale\n- asks whether data loss occurred\n- asks when numbers will be current again",
+      "expected_output": "<subject>Update on dashboard data delay</subject>\n<body>\nThank you for flagging the dashboard delay. We identified the issue, rolled back the change that caused it, and are actively completing the backlog. There is no indication of data loss.\n\nWe expect dashboards to return to current data shortly, and we will send another update once backfill is complete. Our next step is to confirm that all delayed records have been processed successfully.\n</body>",
+      "notes": "Visible client communication case."
+    }
+  ],
+  "hidden_cases": [
+    {
+      "id": "hidden-1",
+      "name": "Payment reconciliation delay",
+      "input_data": "Internal notes:\n- reconciliation job was blocked by a malformed partner payload\n- mitigation deployed and queue draining\n- no payment failures, only delayed status updates\nClient concerns:\n- wants reassurance about charge success\n- wants next update timing",
+      "expected_output": "",
+      "notes": "Hidden client note.",
+      "hidden": true
+    },
+    {
+      "id": "hidden-2",
+      "name": "Notification delivery outage",
+      "input_data": "Internal notes:\n- SQS dead-letter queue overflow after a bad IAM policy push\n- notifications queued but not delivered for ~90 minutes\n- recovery complete, backlog flushed\nClient concerns:\n- missed important alerts\n- wants to know if any notifications were permanently lost\n- asks what is being done to prevent recurrence",
+      "expected_output": "",
+      "notes": "Tests jargon suppression and multi-concern coverage.",
+      "hidden": true
+    }
+  ],
+  "validators": [
+    {
+      "kind": "xml_required_tags",
+      "label": "Has <subject> and <body> tags",
+      "config": {
+        "required_tags": ["subject", "body"]
+      }
+    },
+    {
+      "kind": "regex",
+      "label": "Contains a next-step signal",
+      "config": {
+        "pattern": "(next step|next steps|follow.?up|we will|we'll|expect|our next|update you|keep you (informed|posted))",
+        "multiline": true,
+        "failure_message": "The email should commit to a concrete next action or follow-up."
+      }
+    },
+    {
+      "kind": "regex",
+      "label": "Professional greeting or sign-off",
+      "config": {
+        "pattern": "(thank you|we appreciate|apolog|regards|sincerely|best,|hello|hi )",
+        "multiline": true,
+        "failure_message": "A client email should open or close with professional language."
+      }
+    }
+  ],
+  "evaluator_hook": "client_email_hook",
+  "tags": ["client-facing", "communication"],
+  "created_by_user": false
+}

@@ -1,10 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { siteName } from "@/lib/site-metadata";
 import { SettingsPanel } from "./settings-panel";
 
 export function NavBar() {
+  const pathname = usePathname();
+
+  const navItems = [
+    { href: "/learn", label: "Curriculum" },
+    { href: "/practice", label: "Practice" },
+  ];
+
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-sm">
       <nav className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4">
@@ -16,12 +24,25 @@ export function NavBar() {
           {siteName}
         </Link>
         <div className="flex items-center gap-4 text-sm">
-          <Link
-            href="/learn"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Curriculum
-          </Link>
+          {navItems.map((item) => {
+            const isActive =
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={[
+                  "rounded-full px-3 py-1.5 transition-colors",
+                  isActive
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                ].join(" ")}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
           <SettingsPanel />
         </div>
       </nav>
