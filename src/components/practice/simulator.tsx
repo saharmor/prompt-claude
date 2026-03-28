@@ -1,12 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
+  DEFAULT_PRACTICE_MODEL,
+  getStoredPracticeModel,
+  getDecryptedApiKey,
   OPEN_SETTINGS_EVENT,
   SETTINGS_CHANGE_EVENT,
 } from "@/components/settings-panel";
-import { ProblemSidebar } from "@/components/practice/problem-sidebar";
 import { PromptEditor } from "@/components/practice/prompt-editor";
+import { PracticeSessionHeader } from "@/components/practice/practice-session-header";
+import { PracticeSetupPanel } from "@/components/practice/practice-setup-panel";
 import { RunPanel } from "@/components/practice/run-panel";
 import {
   loadPracticeWorkspace,
@@ -18,14 +23,11 @@ import type {
   Problem,
 } from "@/lib/practice/types";
 import {
-  DEFAULT_EXAM_STATE,
   type EvaluationResult,
   type RunResult,
 } from "@/lib/practice/types";
 import {
-  computeRemainingSeconds,
   buildInputPlaceholder,
-  hydrateExamState,
   isoNow,
   replaceInputVariable,
 } from "@/lib/practice/utils";
@@ -48,17 +50,6 @@ const EMPTY_RUN_STATE: RunState = {
   error: "",
 };
 
-function getStoredApiKey() {
-  if (typeof window === "undefined") {
-    return "";
-  }
-
-  return (
-    localStorage.getItem("anthropic_api_key") ??
-    sessionStorage.getItem("anthropic_api_key") ??
-    ""
-  );
-}
 
 async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
@@ -78,17 +69,6 @@ async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> 
   }
 
   return payload as T;
-}
-
-function buildExamSummary(problemIds: string[], problems: Problem[], drafts: Record<string, string>) {
-  return problemIds.map((problemId) => {
-    const problem = problems.find((item) => item.id === problemId);
-    return {
-      problemId,
-      title: problem?.title || problemId,
-      prompt: drafts[problemId] ?? problem?.starter_prompt ?? "",
-    };
-  });
 }
 
 function normalizeDraftsForProblems(
@@ -112,7 +92,33 @@ function normalizeDraftsForProblems(
   );
 }
 
-export function Simulator() {
+function resolvePracticeModel(availableModels: string[]) {
+  const storedModel = getStoredPracticeModel();
+  if (availableModels.includes(storedModel)) {
+    return storedModel;
+  }
+
+  return availableModels[0] ?? DEFAULT_PRACTICE_MODEL;
+}
+
+function didPassEvaluation(evaluation: EvaluationResult[]) {
+  return evaluation.length > 0 && evaluation.every((item) => item.passed);
+}
+
+function didPassHiddenSuite(hiddenSuite: HiddenSuiteResult[]) {
+  return hiddenSuite.every((item) => item.passed);
+}
+
+function isCompletedRun(run: Pick<RunResult, "error" | "evaluation" | "hidden_suite">) {
+  return (
+    !run.error &&
+    didPassEvaluation(run.evaluation) &&
+    didPassHiddenSuite(run.hidden_suite)
+  );
+}
+
+export function Simulator({ initialProblemId }: { initialProblemId: string }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saveError, setSaveError] = useState("");
@@ -120,35 +126,27 @@ export function Simulator() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [draftUpdatedAt, setDraftUpdatedAt] = useState<Record<string, string>>({});
   const [runs, setRuns] = useState<RunResult[]>([]);
-  const [examState, setExamState] = useState(DEFAULT_EXAM_STATE);
-  const [examSummary, setExamSummary] = useState<
-    { problemId: string; title: string; prompt: string }[]
-  >([]);
   const [config, setConfig] = useState<BootstrapResponse["config"]>({
     hasAnthropicKey: false,
-    anthropicModels: ["claude-sonnet-4-6"],
+    anthropicModels: [DEFAULT_PRACTICE_MODEL],
   });
   const [currentProblemId, setCurrentProblemId] = useState("");
   const [currentCaseId, setCurrentCaseId] = useState("");
   const [currentInput, setCurrentInput] = useState("");
-  const [showPreview, setShowPreview] = useState(true);
-  const [anthropicModel, setAnthropicModel] = useState("claude-sonnet-4-6");
+  const [anthropicModel, setAnthropicModel] = useState(DEFAULT_PRACTICE_MODEL);
   const [anthropicApiKey, setAnthropicApiKey] = useState("");
-  const [includeHiddenSuite, setIncludeHiddenSuite] = useState(false);
+
   const [runState, setRunState] = useState<RunState>(EMPTY_RUN_STATE);
   const [hints, setHints] = useState<Record<string, string>>({});
   const [hintLoading, setHintLoading] = useState<Record<string, boolean>>({});
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [editorExternalDraftVersion, setEditorExternalDraftVersion] = useState(0);
   const [pendingActionAfterSettings, setPendingActionAfterSettings] = useState<
     "run" | null
   >(null);
-  const [, setTimerTick] = useState(0);
-  const [isWideViewport, setIsWideViewport] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
   const activeProblemIdRef = useRef("");
   const runRequestIdRef = useRef(0);
   const hintContextIdRef = useRef(0);
-  const latestExamStateRef = useRef(examState);
-  const latestProblemsRef = useRef(problems);
   const latestDraftsRef = useRef(drafts);
 
   const currentProblem = useMemo(
@@ -161,15 +159,51 @@ export function Simulator() {
   const currentDraft = currentProblem
     ? drafts[currentProblem.id] ?? currentProblem.starter_prompt ?? ""
     : "";
-  const examProblems = useMemo(
-    () =>
-      examState.problem_ids
-        .map((problemId) => problems.find((problem) => problem.id === problemId))
-        .filter((problem): problem is Problem => Boolean(problem)),
-    [examState.problem_ids, problems]
+  const completedProblemIds = useMemo(
+    () => new Set(runs.filter(isCompletedRun).map((run) => run.problem_id)),
+    [runs]
   );
-  const effectiveSidebarCollapsed = sidebarCollapsed && isWideViewport;
-  const remainingSeconds = computeRemainingSeconds(examState);
+  const isCurrentProblemCompleted =
+    Boolean(currentProblem) &&
+    (completedProblemIds.has(currentProblem.id) ||
+      (!runState.running &&
+        !runState.error &&
+        didPassEvaluation(runState.evaluation) &&
+        didPassHiddenSuite(runState.hiddenSuite)));
+  const nextProblem = useMemo(() => {
+    if (!currentProblem || !isCurrentProblemCompleted) {
+      return null;
+    }
+
+    const currentIndex = problems.findIndex((problem) => problem.id === currentProblem.id);
+    if (currentIndex === -1) {
+      return null;
+    }
+
+    const laterProblems = problems.slice(currentIndex + 1);
+    const nextSameDifficulty = laterProblems.find(
+      (problem) =>
+        problem.difficulty === currentProblem.difficulty &&
+        !completedProblemIds.has(problem.id)
+    );
+
+    if (nextSameDifficulty) {
+      return nextSameDifficulty;
+    }
+
+    const nextIncompleteLater = laterProblems.find(
+      (problem) => !completedProblemIds.has(problem.id)
+    );
+
+    if (nextIncompleteLater) {
+      return nextIncompleteLater;
+    }
+
+    return problems.find(
+      (problem) =>
+        problem.id !== currentProblem.id && !completedProblemIds.has(problem.id)
+    ) ?? null;
+  }, [completedProblemIds, currentProblem, isCurrentProblemCompleted, problems]);
 
   useEffect(() => {
     const bootstrap = async () => {
@@ -180,22 +214,22 @@ export function Simulator() {
           workspace.drafts,
           payload.problems
         );
-        const nextExamState = hydrateExamState(workspace.examState);
         const firstProblem = payload.problems[0];
+        const requestedProblem = payload.problems.find(
+          (problem) => problem.id === initialProblemId
+        );
 
         setProblems(payload.problems);
         setDrafts(nextDrafts);
+        latestDraftsRef.current = nextDrafts;
         setDraftUpdatedAt(workspace.draftUpdatedAt);
         setRuns(workspace.runs);
         setConfig(payload.config);
-        setAnthropicModel(
-          payload.config.anthropicModels[0] ?? "claude-sonnet-4-6"
-        );
-        setAnthropicApiKey(getStoredApiKey());
-        setExamState(nextExamState);
+        setAnthropicModel(resolvePracticeModel(payload.config.anthropicModels));
+        setAnthropicApiKey(await getDecryptedApiKey());
 
-        if (nextExamState.selected_problem_id) {
-          setCurrentProblemId(nextExamState.selected_problem_id);
+        if (requestedProblem) {
+          setCurrentProblemId(requestedProblem.id);
         } else if (firstProblem) {
           setCurrentProblemId(firstProblem.id);
           setCurrentCaseId(firstProblem.sample_cases[0]?.id ?? "");
@@ -213,32 +247,15 @@ export function Simulator() {
     };
 
     bootstrap().catch(() => {});
-  }, []);
+  }, [initialProblemId]);
 
   useEffect(() => {
     activeProblemIdRef.current = currentProblem?.id ?? "";
   }, [currentProblem]);
 
   useEffect(() => {
-    latestExamStateRef.current = examState;
-  }, [examState]);
-
-  useEffect(() => {
-    latestProblemsRef.current = problems;
-  }, [problems]);
-
-  useEffect(() => {
     latestDraftsRef.current = drafts;
   }, [drafts]);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 1280px)");
-    const updateViewport = () => setIsWideViewport(mediaQuery.matches);
-
-    updateViewport();
-    mediaQuery.addEventListener("change", updateViewport);
-    return () => mediaQuery.removeEventListener("change", updateViewport);
-  }, []);
 
   const handleRun = useCallback(async () => {
     if (!currentProblem || runState.running) {
@@ -253,10 +270,13 @@ export function Simulator() {
     if (!anthropicApiKey.trim() && !config.hasAnthropicKey) {
       setPendingActionAfterSettings("run");
       setError("no-api-key");
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
       return;
     }
 
     const requestProblemId = currentProblem.id;
+    const requestPrompt =
+      latestDraftsRef.current[requestProblemId] ?? currentProblem.starter_prompt ?? "";
     const requestId = runRequestIdRef.current + 1;
     runRequestIdRef.current = requestId;
     hintContextIdRef.current += 1;
@@ -272,10 +292,10 @@ export function Simulator() {
           modelName: anthropicModel,
           apiKey: anthropicApiKey.trim() || undefined,
           problemId: currentProblem.id,
-          promptMarkdown: currentDraft,
+          promptMarkdown: requestPrompt,
           inputData: currentInput,
           caseId: currentCase?.id ?? null,
-          includeHiddenSuite,
+          includeHiddenSuite: true,
         }),
       });
 
@@ -319,17 +339,22 @@ export function Simulator() {
     anthropicModel,
     config.hasAnthropicKey,
     currentCase?.id,
-    currentDraft,
     currentInput,
     currentProblem,
-    includeHiddenSuite,
     runState.running,
   ]);
 
   useEffect(() => {
-    function handleSettingsChange(event: Event) {
-      const nextApiKey = getStoredApiKey();
+    async function handleSettingsChange(event: Event) {
+      const nextApiKey = await getDecryptedApiKey();
       setAnthropicApiKey(nextApiKey);
+      setAnthropicModel(
+        event instanceof CustomEvent &&
+          typeof event.detail?.practiceModel === "string" &&
+          config.anthropicModels.includes(event.detail.practiceModel)
+          ? event.detail.practiceModel
+          : resolvePracticeModel(config.anthropicModels)
+      );
 
       if (pendingActionAfterSettings !== "run") {
         return;
@@ -352,7 +377,20 @@ export function Simulator() {
 
     window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
     return () => window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
-  }, [config.hasAnthropicKey, pendingActionAfterSettings, handleRun]);
+  }, [config.anthropicModels, config.hasAnthropicKey, pendingActionAfterSettings, handleRun]);
+
+  useEffect(() => {
+    if (
+      loading ||
+      !initialProblemId ||
+      !problems.some((problem) => problem.id === initialProblemId) ||
+      currentProblemId === initialProblemId
+    ) {
+      return;
+    }
+
+    setCurrentProblemId(initialProblemId);
+  }, [currentProblemId, initialProblemId, loading, problems]);
 
   useEffect(() => {
     if (!currentProblem && problems.length > 0) {
@@ -393,7 +431,6 @@ export function Simulator() {
           drafts,
           draftUpdatedAt,
           runs,
-          examState,
         });
         setSaveError("");
       } catch (saveError) {
@@ -406,64 +443,19 @@ export function Simulator() {
     }, 300);
 
     return () => window.clearTimeout(timer);
-  }, [draftUpdatedAt, drafts, examState, loading, runs]);
-
-  useEffect(() => {
-    if (!examState.active) {
-      return;
-    }
-
-    const interval = window.setInterval(() => {
-      setTimerTick((previous) => previous + 1);
-      const currentExamState = latestExamStateRef.current;
-      const remaining = computeRemainingSeconds(currentExamState);
-
-      if (remaining <= 0) {
-        setExamSummary(
-          buildExamSummary(
-            currentExamState.problem_ids,
-            latestProblemsRef.current,
-            latestDraftsRef.current
-          )
-        );
-        setExamState(DEFAULT_EXAM_STATE);
-        return;
-      }
-
-      const lastAutosave = currentExamState.last_autosave_at
-        ? new Date(currentExamState.last_autosave_at).getTime()
-        : 0;
-
-      if (Date.now() - lastAutosave >= 30_000) {
-        setExamState((previous) =>
-          previous.active
-            ? {
-                ...previous,
-                last_autosave_at: isoNow(),
-              }
-            : previous
-        );
-      }
-    }, 1000);
-
-    return () => window.clearInterval(interval);
-  }, [examState.active]);
+  }, [draftUpdatedAt, drafts, loading, runs]);
 
   function openSettings() {
     window.dispatchEvent(new Event(OPEN_SETTINGS_EVENT));
   }
 
   function selectProblem(problemId: string) {
-    if (examState.active && !examState.problem_ids.includes(problemId)) {
-      return;
+    if (problemId !== currentProblemId) {
+      setCurrentProblemId(problemId);
     }
 
-    setCurrentProblemId(problemId);
-    if (examState.active) {
-      setExamState((previous) => ({
-        ...previous,
-        selected_problem_id: problemId,
-      }));
+    if (problemId !== initialProblemId) {
+      router.push(`/practice/${problemId}`);
     }
   }
 
@@ -472,10 +464,12 @@ export function Simulator() {
       return;
     }
 
-    setDrafts((previous) => ({
-      ...previous,
+    const nextDrafts = {
+      ...latestDraftsRef.current,
       [currentProblem.id]: nextMarkdown,
-    }));
+    };
+    latestDraftsRef.current = nextDrafts;
+    setDrafts(nextDrafts);
     setDraftUpdatedAt((previous) => ({
       ...previous,
       [currentProblem.id]: isoNow(),
@@ -483,12 +477,16 @@ export function Simulator() {
   }
 
   function appendTemplate(template: string) {
+    const liveDraft = currentProblem
+      ? latestDraftsRef.current[currentProblem.id] ?? currentProblem.starter_prompt ?? ""
+      : currentDraft;
     const inputPlaceholder = currentProblem
       ? buildInputPlaceholder(currentProblem.input_variable_name)
       : "${{INPUT}}";
     const normalizedTemplate = template.split("{{INPUT}}").join(inputPlaceholder);
-    const merged = `${currentDraft.trimEnd()}\n\n${normalizedTemplate}`.trim();
+    const merged = `${liveDraft.trimEnd()}\n\n${normalizedTemplate}`.trim();
     updateCurrentDraft(merged);
+    setEditorExternalDraftVersion((previous) => previous + 1);
   }
 
   const requestHint = useCallback(async (checkKey: string, label: string, details: string) => {
@@ -555,60 +553,6 @@ export function Simulator() {
     runState.rawOutput,
   ]);
 
-  function startExam() {
-    const selectedProblems = problems.slice(0, Math.min(4, problems.length));
-    if (selectedProblems.length === 0) {
-      return;
-    }
-
-    const nextState = {
-      active: true,
-      paused: false,
-      duration_minutes: 55,
-      problem_ids: selectedProblems.map((problem) => problem.id),
-      selected_problem_id: selectedProblems[0].id,
-      started_at: isoNow(),
-      paused_at: "",
-      total_paused_seconds: 0,
-      last_autosave_at: isoNow(),
-    };
-
-    setExamSummary([]);
-    setExamState(nextState);
-    selectProblem(selectedProblems[0].id);
-  }
-
-  function pauseOrResumeExam() {
-    setExamState((previous) => {
-      if (!previous.active) {
-        return previous;
-      }
-
-      if (previous.paused) {
-        const pausedDelta = previous.paused_at
-          ? (Date.now() - new Date(previous.paused_at).getTime()) / 1000
-          : 0;
-
-        return {
-          ...previous,
-          paused: false,
-          paused_at: "",
-          total_paused_seconds: previous.total_paused_seconds + pausedDelta,
-        };
-      }
-
-      return {
-        ...previous,
-        paused: true,
-        paused_at: isoNow(),
-      };
-    });
-  }
-
-  function resetExam() {
-    setExamState(DEFAULT_EXAM_STATE);
-  }
-
   function openSettingsFromError() {
     setPendingActionAfterSettings("run");
     openSettings();
@@ -638,14 +582,16 @@ export function Simulator() {
     <div className="space-y-4">
       {error ? (
         error === "no-api-key" ? (
-          <button
-            type="button"
-            onClick={openSettingsFromError}
-            className="w-full rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3 text-left text-sm text-primary shadow-sm transition-colors hover:bg-primary/12"
-          >
-            Please set your Anthropic API key first. Click this message to open
-            Settings.
-          </button>
+          <div ref={errorRef} className="w-full rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm text-primary shadow-sm">
+            Please set your Anthropic API key first{" "}
+            <button
+              type="button"
+              onClick={openSettingsFromError}
+              className="cursor-pointer underline italic hover:opacity-80 transition-opacity"
+            >
+              open settings
+            </button>
+          </div>
         ) : (
           <button
             type="button"
@@ -667,91 +613,41 @@ export function Simulator() {
         </button>
       ) : null}
 
-      {examSummary.length > 0 ? (
-        <div className="rounded-2xl border border-border bg-card px-4 py-4 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h2 className="font-semibold text-foreground">Exam Summary</h2>
-              <p className="text-sm text-muted-foreground">
-                Your latest timed run ended. These drafts were captured from the
-                selected exam problems.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setExamSummary([])}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Dismiss
-            </button>
-          </div>
-          <div className="mt-4 grid gap-3 lg:grid-cols-2">
-            {examSummary.map((item) => (
-              <div
-                key={item.problemId}
-                className="rounded-xl border border-border bg-background px-3 py-3"
-              >
-                <p className="font-medium text-foreground">{item.title}</p>
-                <pre className="mt-2 overflow-x-auto text-xs whitespace-pre-wrap text-muted-foreground">
-                  {item.prompt || "No prompt saved."}
-                </pre>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      <PracticeSessionHeader />
 
-      <div
-        className={[
-          "grid items-start gap-4 transition-[grid-template-columns] duration-300 ease-in-out",
-          effectiveSidebarCollapsed
-            ? "xl:grid-cols-[48px_minmax(0,1fr)_320px]"
-            : "xl:grid-cols-[260px_minmax(0,1fr)_320px]",
-        ].join(" ")}
-      >
-        <div className="xl:sticky xl:top-20">
-          <ProblemSidebar
-            problems={problems}
-            currentProblemId={currentProblem.id}
-            collapsed={effectiveSidebarCollapsed}
-            onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-            onSelectProblem={selectProblem}
-            onStartExam={startExam}
-            onPauseResumeExam={pauseOrResumeExam}
-            onResetExam={resetExam}
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.2fr)_480px]">
+        <div className="space-y-4">
+          <PracticeSetupPanel
+            currentProblem={currentProblem}
+            currentInput={currentInput}
+            currentCaseId={currentCaseId}
+            visibleCases={visibleCases}
+            onCaseChange={(caseId) => setCurrentCaseId(caseId)}
+            onInputChange={setCurrentInput}
+          />
+          <PromptEditor
+            key={`${currentProblem.id}:${editorExternalDraftVersion}`}
+            currentProblem={currentProblem}
+            currentDraft={currentDraft}
+            onDraftChange={updateCurrentDraft}
             onAppendTemplate={appendTemplate}
-            examState={examState}
-            examProblems={examProblems}
-            remainingSeconds={remainingSeconds}
+            onRun={handleRun}
           />
         </div>
-        <PromptEditor
-          currentProblem={currentProblem}
-          currentDraft={currentDraft}
-          showPreview={showPreview}
-          onDraftChange={updateCurrentDraft}
-          onTogglePreview={setShowPreview}
-          onRun={handleRun}
-        />
         <div className="xl:sticky xl:top-20">
           <RunPanel
             currentProblem={currentProblem}
             currentDraft={currentDraft}
             currentInput={currentInput}
-            currentCaseId={currentCaseId}
-            visibleCases={visibleCases}
-            anthropicModels={config.anthropicModels}
-            anthropicModel={anthropicModel}
-            includeHiddenSuite={includeHiddenSuite}
             runState={runState}
             runs={runs}
             hints={hints}
             hintLoading={hintLoading}
-            onCaseChange={(caseId) => setCurrentCaseId(caseId)}
-            onInputChange={setCurrentInput}
-            onModelChange={setAnthropicModel}
-            onIncludeHiddenSuiteChange={setIncludeHiddenSuite}
-            onRun={handleRun}
+            isCurrentProblemCompleted={isCurrentProblemCompleted}
+            nextProblemTitle={nextProblem?.title ?? null}
+            onGoToNextProblem={() => {
+              if (nextProblem) selectProblem(nextProblem.id);
+            }}
             onRequestHint={requestHint}
           />
         </div>

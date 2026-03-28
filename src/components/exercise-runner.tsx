@@ -19,6 +19,7 @@ import type { Exercise, GradeResult } from "@/lib/curriculum/schema";
 import {
   OPEN_SETTINGS_EVENT,
   SETTINGS_CHANGE_EVENT,
+  getDecryptedApiKey,
 } from "@/components/settings-panel";
 import { Award } from "lucide-react";
 import { ShareButtons, totalExercises, totalChapters } from "@/components/share-buttons";
@@ -99,7 +100,7 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
     setResult(null);
 
     try {
-      const apiKey = getApiKey();
+      const apiKey = await getDecryptedApiKey();
       if (!apiKey) {
         pendingSubmitAfterSettingsRef.current = true;
         setError("no-api-key");
@@ -171,14 +172,14 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
   }, [chapterSlug, exercise.id, exerciseKey, prompt]);
 
   useEffect(() => {
-    function handleSettingsChange(event: Event) {
+    async function handleSettingsChange(event: Event) {
       if (!pendingSubmitAfterSettingsRef.current) return;
 
       const hasApiKey =
         event instanceof CustomEvent &&
         typeof event.detail?.hasApiKey === "boolean"
           ? event.detail.hasApiKey
-          : Boolean(getApiKey());
+          : Boolean(await getDecryptedApiKey());
 
       if (!hasApiKey) return;
 
@@ -317,17 +318,16 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
         <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           {error === "no-api-key" ? (
             <>
-              Please set your Anthropic API key first. Click the{" "}
+              Please set your Anthropic API key first{" "}
               <button
                 onClick={() => {
                   pendingSubmitAfterSettingsRef.current = true;
                   window.dispatchEvent(new Event(OPEN_SETTINGS_EVENT));
                 }}
-                className="underline font-medium hover:opacity-80 transition-opacity cursor-pointer"
+                className="underline italic hover:opacity-80 transition-opacity cursor-pointer"
               >
-                gear icon
+                open settings
               </button>
-              {" "}in the top-right corner.
             </>
           ) : (
             error
@@ -344,12 +344,3 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
   );
 }
 
-function getApiKey(): string | null {
-  if (typeof window === "undefined") return null;
-  // sessionStorage takes priority (session-only save); fall back to persistent localStorage
-  return (
-    sessionStorage.getItem("anthropic_api_key") ||
-    localStorage.getItem("anthropic_api_key") ||
-    null
-  );
-}
