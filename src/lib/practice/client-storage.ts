@@ -3,12 +3,8 @@ import {
   readBrowserJson,
 } from "@/lib/browser-storage";
 import { RUN_HISTORY_LIMIT } from "@/lib/practice/constants";
-import {
-  DEFAULT_EXAM_STATE,
-  type ExamState,
-  type RunResult,
-} from "@/lib/practice/types";
-import { hydrateExamState, hydrateRunResult } from "@/lib/practice/utils";
+import type { RunResult } from "@/lib/practice/types";
+import { hydrateRunResult } from "@/lib/practice/utils";
 
 export const PRACTICE_STORAGE_KEY = "promptcraft_practice";
 export const PRACTICE_CHANGE_EVENT = "promptcraft-practice-change";
@@ -25,7 +21,6 @@ export interface PracticeWorkspaceSnapshot {
   drafts: Record<string, string>;
   draftUpdatedAt: Record<string, string>;
   runs: RunResult[];
-  examState: ExamState;
 }
 
 interface PracticeWorkspaceData extends PracticeWorkspaceSnapshot {
@@ -42,7 +37,6 @@ function createEmptyWorkspace(): PracticeWorkspaceData {
     drafts: {},
     draftUpdatedAt: {},
     runs: [],
-    examState: DEFAULT_EXAM_STATE,
   };
 }
 
@@ -81,7 +75,6 @@ function normalizeWorkspace(value: unknown): PracticeWorkspaceData {
     runs: Array.isArray(value.runs)
       ? value.runs.filter((entry) => entry != null).map((entry) => hydrateRunResult(entry)).slice(0, RUN_HISTORY_LIMIT)
       : [],
-    examState: hydrateExamState(value.examState),
   };
 }
 
@@ -98,14 +91,12 @@ export function loadPracticeWorkspace() {
           readBrowserJson<Record<string, string>>(LEGACY_DRAFT_TIMESTAMPS_KEY, {})
         ),
         runs: [],
-        examState: hydrateExamState(readBrowserJson<object | null>(LEGACY_EXAM_KEY, null)),
       };
 
   return {
     drafts: workspace.drafts,
     draftUpdatedAt: workspace.draftUpdatedAt,
     runs: workspace.runs,
-    examState: workspace.examState,
   };
 }
 

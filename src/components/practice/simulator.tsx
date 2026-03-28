@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import confetti from "canvas-confetti";
 import { useRouter } from "next/navigation";
 import {
   DEFAULT_PRACTICE_MODEL,
@@ -19,12 +20,10 @@ import {
 } from "@/lib/practice/client-storage";
 import type {
   BootstrapResponse,
+  EvaluationResult,
   HiddenSuiteResult,
   Problem,
-} from "@/lib/practice/types";
-import {
-  type EvaluationResult,
-  type RunResult,
+  RunResult,
 } from "@/lib/practice/types";
 import {
   buildInputPlaceholder,
@@ -49,7 +48,6 @@ const EMPTY_RUN_STATE: RunState = {
   hiddenSuite: [],
   error: "",
 };
-
 
 async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
@@ -143,11 +141,11 @@ export function Simulator({ initialProblemId }: { initialProblemId: string }) {
   const [pendingActionAfterSettings, setPendingActionAfterSettings] = useState<
     "run" | null
   >(null);
-  const errorRef = useRef<HTMLDivElement>(null);
   const activeProblemIdRef = useRef("");
   const runRequestIdRef = useRef(0);
   const hintContextIdRef = useRef(0);
   const latestDraftsRef = useRef(drafts);
+  const latestRunsRef = useRef(runs);
 
   const currentProblem = useMemo(
     () => problems.find((problem) => problem.id === currentProblemId) ?? problems[0] ?? null,
@@ -257,6 +255,10 @@ export function Simulator({ initialProblemId }: { initialProblemId: string }) {
     latestDraftsRef.current = drafts;
   }, [drafts]);
 
+  useEffect(() => {
+    latestRunsRef.current = runs;
+  }, [runs]);
+
   const handleRun = useCallback(async () => {
     if (!currentProblem || runState.running) {
       return;
@@ -317,6 +319,32 @@ export function Simulator({ initialProblemId }: { initialProblemId: string }) {
       });
       setRuns((previous) => [run, ...previous].slice(0, 20));
       setError("");
+
+      if (!run.error && isCompletedRun(run)) {
+        // Left burst
+        confetti({
+          particleCount: 100,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.65 },
+        });
+        // Right burst
+        confetti({
+          particleCount: 100,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.65 },
+        });
+        // Center shower
+        setTimeout(() => {
+          confetti({
+            particleCount: 200,
+            spread: 120,
+            startVelocity: 45,
+            origin: { y: 0.3 },
+          });
+        }, 250);
+      }
     } catch (runError) {
       if (
         runRequestIdRef.current !== requestId ||
@@ -407,7 +435,21 @@ export function Simulator({ initialProblemId }: { initialProblemId: string }) {
     hintContextIdRef.current += 1;
     setCurrentCaseId(currentProblem.sample_cases[0]?.id ?? "");
     setCurrentInput(currentProblem.sample_cases[0]?.input_data ?? "");
-    setRunState(EMPTY_RUN_STATE);
+
+    const lastRun = latestRunsRef.current.find((r) => r.problem_id === currentProblem.id);
+    if (lastRun) {
+      setRunState({
+        running: false,
+        rawOutput: lastRun.output_text,
+        formattedOutput: lastRun.formatted_output,
+        evaluation: lastRun.evaluation,
+        hiddenSuite: lastRun.hidden_suite,
+        error: lastRun.error,
+      });
+    } else {
+      setRunState(EMPTY_RUN_STATE);
+    }
+
     setHints({});
     setHintLoading({});
   }, [currentProblem]);
@@ -582,7 +624,7 @@ export function Simulator({ initialProblemId }: { initialProblemId: string }) {
     <div className="space-y-4">
       {error ? (
         error === "no-api-key" ? (
-          <div ref={errorRef} className="w-full rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm text-primary shadow-sm">
+          <div className="w-full rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm text-primary shadow-sm">
             Please set your Anthropic API key first{" "}
             <button
               type="button"
@@ -613,7 +655,13 @@ export function Simulator({ initialProblemId }: { initialProblemId: string }) {
         </button>
       ) : null}
 
-      <PracticeSessionHeader />
+      <PracticeSessionHeader
+        isCurrentProblemCompleted={isCurrentProblemCompleted}
+        nextProblemTitle={nextProblem?.title ?? null}
+        onGoToNextProblem={() => {
+          if (nextProblem) selectProblem(nextProblem.id);
+        }}
+      />
 
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.2fr)_480px]">
         <div className="space-y-4">
@@ -643,11 +691,6 @@ export function Simulator({ initialProblemId }: { initialProblemId: string }) {
             runs={runs}
             hints={hints}
             hintLoading={hintLoading}
-            isCurrentProblemCompleted={isCurrentProblemCompleted}
-            nextProblemTitle={nextProblem?.title ?? null}
-            onGoToNextProblem={() => {
-              if (nextProblem) selectProblem(nextProblem.id);
-            }}
             onRequestHint={requestHint}
           />
         </div>

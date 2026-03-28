@@ -1,21 +1,15 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import type {
   EvaluationResult,
   HiddenSuiteResult,
   Problem,
   RunResult,
-  TestCase,
 } from "@/lib/practice/types";
-import {
-  buildInputPlaceholder,
-  buildRuntimePrompt,
-  formatTimestamp,
-} from "@/lib/practice/utils";
+import { buildRuntimePrompt, formatTimestamp } from "@/lib/practice/utils";
 
 interface RunPanelState {
   running: boolean;
@@ -30,28 +24,11 @@ interface RunPanelProps {
   currentProblem: Problem;
   currentDraft: string;
   currentInput: string;
-  currentCaseId: string;
-  visibleCases: TestCase[];
-  anthropicModels: string[];
-  anthropicModel: string;
-  includeHiddenSuite: boolean;
   runState: RunPanelState;
   runs: RunResult[];
   hints: Record<string, string>;
   hintLoading: Record<string, boolean>;
-  onCaseChange: (caseId: string) => void;
-  onInputChange: (value: string) => void;
-  onModelChange: (value: string) => void;
-  onIncludeHiddenSuiteChange: (value: boolean) => void;
-  onRun: () => void;
   onRequestHint: (checkKey: string, label: string, details: string) => void;
-}
-
-function isRunShortcut(event: React.KeyboardEvent<HTMLTextAreaElement>) {
-  return (
-    (event.metaKey || event.ctrlKey) &&
-    (event.key === "Enter" || event.code === "Enter")
-  );
 }
 
 const promptPreviewClassName =
@@ -67,26 +44,13 @@ export function RunPanel({
   currentProblem,
   currentDraft,
   currentInput,
-  currentCaseId,
-  visibleCases,
-  anthropicModels,
-  anthropicModel,
-  includeHiddenSuite,
   runState,
   runs,
   hints,
   hintLoading,
-  onCaseChange,
-  onInputChange,
-  onModelChange,
-  onIncludeHiddenSuiteChange,
-  onRun,
   onRequestHint,
 }: RunPanelProps) {
   const [copyFeedback, setCopyFeedback] = useState("");
-  const modelSelectId = useId();
-  const caseSelectId = useId();
-  const placeholder = buildInputPlaceholder(currentProblem.input_variable_name);
   const passCount = runState.evaluation.filter((item) => item.passed).length;
   const totalChecks = runState.evaluation.length;
 
@@ -102,113 +66,22 @@ export function RunPanel({
   }
 
   return (
-    <section className="relative rounded-2xl border border-border bg-card shadow-sm">
+    <section className="relative rounded-3xl border border-border bg-card shadow-sm">
       <div className="max-h-[42rem] overflow-y-auto xl:max-h-[calc(100vh-8rem)]">
-        <div className="flex flex-col gap-5 p-5">
-          <div className="space-y-3 rounded-2xl border border-border bg-muted/30 p-4">
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-foreground">Run &amp; Review</p>
-              <p className="text-sm text-muted-foreground">
-                Test the current prompt with editable inputs and inspect the
-                output, checks, and history.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label htmlFor={modelSelectId} className="sr-only">
-                Claude model
-              </label>
-              <select
-                id={modelSelectId}
-                aria-label="Claude model"
-                value={anthropicModel}
-                onChange={(event) => onModelChange(event.target.value)}
-                className="h-9 flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
-                {anthropicModels.map((model) => (
-                  <option key={model} value={model}>
-                    {model}
-                  </option>
-                ))}
-              </select>
-              <Button onClick={onRun} disabled={runState.running}>
-                {runState.running ? "Running..." : "Run"}
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Practice Input
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Available placeholder: <code>{placeholder}</code>. If you use it
-                in the prompt, the wrapper below is skipped.
-              </p>
-            </div>
-
-            {visibleCases.length > 0 ? (
-              <>
-                <label htmlFor={caseSelectId} className="sr-only">
-                  Practice case
-                </label>
-                <select
-                  id={caseSelectId}
-                  aria-label="Practice case"
-                  value={currentCaseId}
-                  onChange={(event) => onCaseChange(event.target.value)}
-                  className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                >
-                  {visibleCases.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </>
-            ) : null}
-
-            <Textarea
-              rows={8}
-              value={currentInput}
-              onChange={(event) => onInputChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (isRunShortcut(event)) {
-                  event.preventDefault();
-                  onRun();
-                }
-              }}
-              placeholder="Paste or edit a sample input..."
-            />
-
-            <label className="flex items-center gap-2 text-sm text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={includeHiddenSuite}
-                onChange={(event) =>
-                  onIncludeHiddenSuiteChange(event.target.checked)
-                }
-                className="accent-primary"
-              />
-              Also run hidden checks
-            </label>
-
-            <details className="rounded-xl border border-border bg-background">
-              <summary className="cursor-pointer px-3 py-2 text-sm font-medium">
-                Final prompt sent to Claude
-              </summary>
-              <pre className={promptPreviewClassName}>
-                {buildRuntimePrompt(currentProblem, currentDraft, currentInput)}
-              </pre>
-            </details>
+        <div className="flex flex-col gap-5 p-6">
+          <div className="space-y-1 rounded-2xl border border-border bg-muted/30 p-4">
+            <p className="text-sm font-medium text-foreground">Review</p>
+            <p className="text-sm text-muted-foreground">
+              Inspect the evaluation, the generated output, and the submission
+              history for this exercise.
+            </p>
           </div>
 
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Output
+                  Evaluation
                 </p>
                 {totalChecks > 0 ? (
                   <Badge
@@ -222,6 +95,82 @@ export function RunPanel({
                     {passCount}/{totalChecks} passed
                   </Badge>
                 ) : null}
+              </div>
+            </div>
+
+            {runState.evaluation.length > 0 ? (
+              <div className="space-y-2">
+                {runState.evaluation.map((item, index) => {
+                  const checkKey = `${item.label}-${index}`;
+
+                  if (item.passed) {
+                    return (
+                      <div
+                        key={checkKey}
+                        className="rounded-xl border border-accent-green/30 bg-accent-green/10 px-3 py-2 text-sm text-accent-green"
+                      >
+                        <span className="font-medium">{item.label}</span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <details
+                      key={checkKey}
+                      className="rounded-xl border border-primary/30 bg-primary/8"
+                      open
+                    >
+                      <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-primary">
+                        {item.label}
+                      </summary>
+                      <div className="space-y-3 border-t border-primary/15 px-3 py-3 text-sm">
+                        {item.issues.length > 0 ? (
+                          <ul className="list-disc space-y-1.5 pl-4 text-foreground">
+                            {item.issues.map((issue, issueIndex) => (
+                              <li key={issueIndex}>{issue}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-foreground">{item.details}</p>
+                        )}
+                        {hints[checkKey] ? (
+                          <div className="rounded-lg border border-border bg-background px-3 py-3 text-muted-foreground">
+                            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-foreground">
+                              Coaching hint
+                            </div>
+                            <p>{hints[checkKey]}</p>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={hintLoading[checkKey]}
+                            onClick={() =>
+                              onRequestHint(checkKey, item.label, item.details)
+                            }
+                          >
+                            {hintLoading[checkKey] ? "Thinking..." : "Get a hint"}
+                          </Button>
+                        )}
+                      </div>
+                    </details>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
+                Run your prompt to see automated evaluation feedback here first.
+              </div>
+            )}
+
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Output
+                </p>
               </div>
               {runState.rawOutput ? (
                 <div className="flex items-center gap-2">
@@ -247,64 +196,12 @@ export function RunPanel({
               </pre>
             ) : (
               <div className="rounded-xl border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
-                Run a prompt to see output and automated evaluation here.
+                The generated output will appear here after you run the prompt.
               </div>
             )}
 
-            {runState.evaluation.length > 0 ? (
-              <div className="space-y-2">
-                {runState.evaluation.map((item, index) => {
-                  const checkKey = `${item.label}-${index}`;
-
-                  if (item.passed) {
-                    return (
-                      <div
-                        key={checkKey}
-                        className="rounded-xl border border-accent-green/30 bg-accent-green/10 px-3 py-2 text-sm text-accent-green"
-                      >
-                        <span className="font-medium">{item.label}</span>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <details
-                      key={checkKey}
-                      className="rounded-xl border border-primary/30 bg-primary/8"
-                    >
-                      <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-primary">
-                        {item.label}
-                      </summary>
-                      <div className="space-y-3 border-t border-primary/15 px-3 py-3 text-sm">
-                        <p className="text-foreground">{item.details}</p>
-                        {hints[checkKey] ? (
-                          <div className="rounded-lg border border-border bg-background px-3 py-3 text-muted-foreground">
-                            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-foreground">
-                              Coaching hint
-                            </div>
-                            <p>{hints[checkKey]}</p>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={hintLoading[checkKey]}
-                            onClick={() =>
-                              onRequestHint(checkKey, item.label, item.details)
-                            }
-                          >
-                            {hintLoading[checkKey] ? "Thinking..." : "Get a hint"}
-                          </Button>
-                        )}
-                      </div>
-                    </details>
-                  );
-                })}
-              </div>
-            ) : null}
-
             {runState.hiddenSuite.length > 0 ? (
-              <details className="rounded-xl border border-border bg-background" open>
+              <details className="rounded-xl border border-border bg-background">
                 <summary className="cursor-pointer px-3 py-2 text-sm font-medium">
                   Hidden checks (
                   {
@@ -329,6 +226,15 @@ export function RunPanel({
               </details>
             ) : null}
           </div>
+
+          <details className="rounded-xl border border-border bg-background">
+            <summary className="cursor-pointer px-3 py-2 text-sm font-medium">
+              Final prompt sent to Claude
+            </summary>
+            <pre className={promptPreviewClassName}>
+              {buildRuntimePrompt(currentProblem, currentDraft, currentInput)}
+            </pre>
+          </details>
 
           {runs.length > 0 ? (
             <details className="rounded-xl border border-border bg-background">
@@ -408,15 +314,15 @@ export function RunPanel({
 
       {runState.running ? (
         <div
-          className="absolute inset-0 flex items-center justify-center bg-card/80 backdrop-blur-sm"
+          className="absolute inset-0 flex items-center justify-center rounded-3xl bg-card/80 px-6 backdrop-blur-sm"
           role="status"
           aria-live="polite"
         >
-          <div className="rounded-2xl border border-border bg-background px-5 py-4 text-center shadow-sm">
+          <div className="rounded-2xl border border-border bg-background px-8 py-4 text-center shadow-sm">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-primary/25 border-t-primary" />
             <p className="font-medium text-foreground">Running evaluation...</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              The output and checks will appear here when Claude finishes.
+              The output and checks will appear here when evaluation finishes.
             </p>
           </div>
         </div>
