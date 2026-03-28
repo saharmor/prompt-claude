@@ -191,6 +191,7 @@ export function Simulator({ initialProblemId }: { initialProblemId: string }) {
   const hintContextIdRef = useRef(0);
   const latestDraftsRef = useRef(drafts);
   const latestRunsRef = useRef(runs);
+  const runPanelRef = useRef<HTMLDivElement>(null);
 
   const currentProblem = useMemo(
     () => problems.find((problem) => problem.id === currentProblemId) ?? problems[0] ?? null,
@@ -336,6 +337,12 @@ export function Simulator({ initialProblemId }: { initialProblemId: string }) {
     setRunState((previous) => ({ ...previous, running: true, error: "" }));
     setHints({});
     setHintLoading({});
+
+    if (window.innerWidth < 1280) {
+      setTimeout(() => {
+        runPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
 
     if (isSampleDemo) {
       await new Promise((resolve) => setTimeout(resolve, 8000));
@@ -766,7 +773,7 @@ export function Simulator({ initialProblemId }: { initialProblemId: string }) {
             onRun={handleRun}
           />
         </div>
-        <div className={`xl:sticky xl:top-20 ${runState.running || runState.rawOutput || runState.evaluation.length > 0 || runState.error ? "" : "hidden xl:block"}`}>
+        <div ref={runPanelRef} className={`xl:sticky xl:top-20 ${runState.running || runState.rawOutput || runState.evaluation.length > 0 || runState.error ? "" : "hidden xl:block"}`}>
           <RunPanel
             currentProblem={currentProblem}
             currentDraft={currentDraft}

@@ -148,16 +148,16 @@ export default function Home() {
 
       {/* Stats */}
       <section className="w-full border-y border-border bg-muted/50">
-        <div className="mx-auto flex max-w-4xl items-center justify-center gap-12 px-4 py-10 text-center">
-          <div>
+        <div className="mx-auto flex max-w-4xl items-stretch justify-center px-4 py-10 text-center">
+          <div className="flex-1">
             <p className="text-3xl font-bold text-primary">{stats.chapters}</p>
             <p className="text-sm text-muted-foreground">Chapters</p>
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-3xl font-bold text-primary">{stats.exercises}</p>
             <p className="text-sm text-muted-foreground">Guided Exercises</p>
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-3xl font-bold text-primary">{stats.practiceProblems}</p>
             <p className="text-sm text-muted-foreground">Practice Problems</p>
           </div>
