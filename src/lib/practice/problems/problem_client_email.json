@@ -1,5 +1,5 @@
 {
-  "id": "9821dffc",
+  "id": "client-facing-p04",
   "title": "Client-Facing Output",
   "description": "Write the complete prompt for a model that receives technical incident details and must draft a client-ready update. The update needs to balance transparency, calm tone, and actionable next steps while avoiding internal jargon leakage.",
   "input_format": "The input includes internal incident notes, mitigation progress, and one or more client concerns.",

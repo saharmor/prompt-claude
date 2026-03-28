@@ -7,7 +7,7 @@ import {
 } from "@/lib/progress/storage";
 
 interface Props {
-  chapterSlug: string;
+  chapterId: string;
   exerciseIds: string[];
 }
 
@@ -19,11 +19,11 @@ function serializeProgress(snapshot: {
   return `${snapshot.completed}|${snapshot.total}|${snapshot.allPassed ? "1" : "0"}`;
 }
 
-export function ChapterProgress({ chapterSlug, exerciseIds }: Props) {
+export function ChapterProgress({ chapterId, exerciseIds }: Props) {
   const progressSnapshot = useSyncExternalStore(
     subscribeToProgressStorage,
-    () => serializeProgress(getChapterProgress(chapterSlug, exerciseIds)),
-    () => serializeProgress(getChapterProgress(chapterSlug, exerciseIds))
+    () => serializeProgress(getChapterProgress(chapterId, exerciseIds)),
+    () => serializeProgress(getChapterProgress(chapterId, exerciseIds))
   );
   const [completedRaw, totalRaw] = progressSnapshot.split("|");
   const progress = {

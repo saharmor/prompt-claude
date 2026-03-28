@@ -20,7 +20,7 @@ export interface Exercise {
 }
 
 export interface Chapter {
-  slug: string;
+  id: string;
   title: string;
   difficulty: Difficulty;
   concepts: string[];

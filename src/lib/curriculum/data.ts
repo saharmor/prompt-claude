@@ -3,7 +3,7 @@ import { Chapter, Exercise } from "./schema";
 export const chapters: Chapter[] = [
   // ─── BEGINNER ──────────────────────────────────────────
   {
-    slug: "basic-prompt-structure",
+    id: "basic-prompt-ch01",
     title: "Basic Prompt Structure",
     difficulty: "beginner",
     concepts: ["Messages API formatting", "User/assistant roles", "System prompts"],
@@ -41,7 +41,7 @@ A **system prompt** sits outside the message list and sets the overall context, 
     `,
     exercises: [
       {
-        id: "1.1",
+        id: "counting-three-ex01",
         title: "Counting to Three",
         description:
           "Write a prompt that makes Claude count to three. The response should contain the numbers 1, 2, and 3 in sequence.",
@@ -58,7 +58,7 @@ A **system prompt** sits outside the message list and sets the overall context, 
           "Count to three. Output only the numbers separated by commas, with no other text.",
       },
       {
-        id: "1.2",
+        id: "system-prompt-ex02",
         title: "System Prompt Basics",
         description:
           "Use a system prompt to change how Claude responds. Write both a system prompt and a user message to see the difference a system prompt makes.",
@@ -76,11 +76,11 @@ A **system prompt** sits outside the message list and sets the overall context, 
     ],
   },
   {
-    slug: "being-clear-and-direct",
+    id: "being-clear-ch02",
     title: "Being Clear and Direct",
     difficulty: "beginner",
     concepts: ["Specificity", "Eliminating ambiguity", "Constraining output"],
-    prerequisites: ["basic-prompt-structure"],
+    prerequisites: ["basic-prompt-ch01"],
     lessonContent: `
 ## The "New Employee" Mental Model
 
@@ -106,7 +106,7 @@ Positive instructions ("Output only the name") work better than negative ones ("
     `,
     exercises: [
       {
-        id: "2.1",
+        id: "no-equivocation-ex03",
         title: "No Equivocation",
         description:
           'Modify the prompt so Claude outputs ONLY the name of one specific basketball player — no other words, punctuation, or explanation.',
@@ -124,7 +124,7 @@ Positive instructions ("Output only the name") work better than negative ones ("
           "Who is the best basketball player of all time? Respond with only the player's full name. No other words, punctuation, or explanation.",
       },
       {
-        id: "2.2",
+        id: "haiku-preamble-ex04",
         title: "Haiku Without Preamble",
         description:
           'Write a prompt that makes Claude produce a haiku that starts immediately with the poem — no "Here is a haiku" or "Sure!" preamble.',
@@ -142,11 +142,11 @@ Positive instructions ("Output only the name") work better than negative ones ("
     ],
   },
   {
-    slug: "assigning-roles",
+    id: "assigning-roles-ch03",
     title: "Assigning Roles",
     difficulty: "beginner",
     concepts: ["System prompts for role assignment", "Persona adoption", "Tone and expertise control"],
-    prerequisites: ["being-clear-and-direct"],
+    prerequisites: ["being-clear-ch02"],
     lessonContent: `
 ## Why Roles Matter
 
@@ -175,7 +175,7 @@ Vague roles produce vague differences. Compare:
     `,
     exercises: [
       {
-        id: "3.1",
+        id: "role-based-ex05",
         title: "Role-Based Response Style",
         description:
           "Use a system prompt to assign Claude a specific persona, then ask a question. The response should clearly reflect the assigned role.",
@@ -191,7 +191,7 @@ Vague roles produce vague differences. Compare:
           'System prompt: "You are a cheerful kindergarten teacher who explains things to 5-year-olds. Use simple words, a warm and encouraging tone, and short sentences."\n\nUser message: "Why is the sky blue?"',
       },
       {
-        id: "3.2",
+        id: "expert-role-ex06",
         title: "Expert Role for Technical Depth",
         description:
           "Assign Claude a domain expert role to improve the quality and depth of a technical response.",
@@ -211,11 +211,11 @@ Vague roles produce vague differences. Compare:
 
   // ─── INTERMEDIATE ──────────────────────────────────────
   {
-    slug: "separating-data-and-instructions",
+    id: "separating-data-ch04",
     title: "Separating Data from Instructions",
     difficulty: "intermediate",
     concepts: ["XML tags as delimiters", "Variable substitution", "Data/instruction separation"],
-    prerequisites: ["assigning-roles"],
+    prerequisites: ["assigning-roles-ch03"],
     lessonContent: `
 ## Why Separation Matters
 
@@ -253,7 +253,7 @@ Translate the following text from {SOURCE_LANGUAGE} to {TARGET_LANGUAGE}.
     `,
     exercises: [
       {
-        id: "4.1",
+        id: "xml-separation-ex07",
         title: "XML Tag Separation",
         description:
           "Rewrite a prompt that mixes instructions and data into one that uses XML tags to cleanly separate them.",
@@ -270,7 +270,7 @@ Translate the following text from {SOURCE_LANGUAGE} to {TARGET_LANGUAGE}.
           'Categorize the following customer email as one of: complaint, question, or praise. Output only the category.\n\n<email>\nI am very unhappy with the product quality and want a full refund. The item arrived damaged and does not match the description.\n</email>',
       },
       {
-        id: "4.2",
+        id: "variable-substitution-ex08",
         title: "Variable Substitution with XML Tags",
         description:
           "Create a prompt template that uses variable placeholders inside XML tags, allowing you to swap in different data while keeping the instruction constant.",
@@ -288,11 +288,11 @@ Translate the following text from {SOURCE_LANGUAGE} to {TARGET_LANGUAGE}.
     ],
   },
   {
-    slug: "formatting-output",
+    id: "formatting-output-ch05",
     title: "Formatting Output & Speaking for Claude",
     difficulty: "intermediate",
     concepts: ["Output format control", "XML output tags", "Response steering"],
-    prerequisites: ["separating-data-and-instructions"],
+    prerequisites: ["separating-data-ch04"],
     lessonContent: `
 ## Controlling What Claude Outputs
 
@@ -331,7 +331,7 @@ Older Claude models supported "prefilling" the assistant response to steer outpu
     `,
     exercises: [
       {
-        id: "5.1",
+        id: "steering-argument-ex09",
         title: "Steering a Specific Argument",
         description:
           "Write a prompt that makes Claude argue that Stephen Curry is the best basketball player of all time. Use clear instructions to steer the response direction.",
@@ -347,7 +347,7 @@ Older Claude models supported "prefilling" the assistant response to steer outpu
           "Make the strongest possible argument that Stephen Curry is the greatest basketball player of all time. Present at least three compelling reasons, addressing his shooting, impact on the game, and championships. Be persuasive and specific with statistics or achievements where possible.",
       },
       {
-        id: "5.2",
+        id: "tagged-haikus-ex10",
         title: "XML Tags for Multiple Poems",
         description:
           "Write a prompt that makes Claude produce exactly two haikus, each clearly separated using XML tags.",
@@ -363,7 +363,7 @@ Older Claude models supported "prefilling" the assistant response to steer outpu
           "Write exactly two haikus about the ocean. Wrap each haiku in its own <haiku> tag, like this:\n\n<haiku>\n[first haiku]\n</haiku>\n\n<haiku>\n[second haiku]\n</haiku>\n\nOutput only the tagged haikus, no other text.",
       },
       {
-        id: "5.3",
+        id: "animal-haikus-ex11",
         title: "Two Haikus, Two Animals",
         description:
           "Create a prompt template with two variable placeholders that produces one haiku per animal, clearly separated with XML tags.",
@@ -381,11 +381,11 @@ Older Claude models supported "prefilling" the assistant response to steer outpu
     ],
   },
   {
-    slug: "precognition-thinking-step-by-step",
+    id: "precognition-thinking-ch06",
     title: "Precognition (Thinking Step by Step)",
     difficulty: "intermediate",
     concepts: ["Chain-of-thought prompting", "Thinking tags", "Reasoning before answering"],
-    prerequisites: ["formatting-output"],
+    prerequisites: ["formatting-output-ch05"],
     lessonContent: `
 ## Let Claude Think Before Answering
 
@@ -419,7 +419,7 @@ This separation has two benefits:
     `,
     exercises: [
       {
-        id: "6.1",
+        id: "email-classification-ex12",
         title: "Email Classification",
         description:
           "Write a prompt that classifies customer support emails into categories. Claude should output the correct classification including the letter (A-D) and category name, and ONLY that.",
@@ -436,7 +436,7 @@ This separation has two benefits:
           'Classify the following customer email into one of these categories:\n(A) Pre-sale question\n(B) Broken or defective item\n(C) Billing question\n(D) Other\n\nFirst, reason through your classification in <thinking> tags. Consider what the customer is describing and which category best fits. Then output ONLY the letter and category name in <answer> tags.\n\n<email>\n{EMAIL_TEXT}\n</email>',
       },
       {
-        id: "6.2",
+        id: "exact-classification-ex13",
         title: "Exact Classification Formatting",
         description:
           "Refine the output of the email classifier so the answer is wrapped in <answer> tags containing only the letter. For example: <answer>B</answer>.",
@@ -455,11 +455,11 @@ This separation has two benefits:
     ],
   },
   {
-    slug: "using-examples-few-shot",
+    id: "using-examples-ch07",
     title: "Using Examples (Few-Shot Prompting)",
     difficulty: "intermediate",
     concepts: ["Few-shot prompting", "Example selection", "Format consistency through examples"],
-    prerequisites: ["precognition-thinking-step-by-step"],
+    prerequisites: ["precognition-thinking-ch06"],
     lessonContent: `
 ## Show, Don't Just Tell
 
@@ -501,7 +501,7 @@ Now classify this email:
     `,
     exercises: [
       {
-        id: "7.1",
+        id: "few-shot-email-ex14",
         title: "Few-Shot Email Classification",
         description:
           "Redo the email classification exercise, but this time use few-shot examples to demonstrate the desired input/output pattern.",
@@ -522,7 +522,7 @@ Now classify this email:
 
   // ─── ADVANCED ──────────────────────────────────────────
   {
-    slug: "avoiding-hallucinations",
+    id: "avoiding-hallucinations-ch08",
     title: "Avoiding Hallucinations",
     difficulty: "advanced",
     concepts: [
@@ -531,7 +531,7 @@ Now classify this email:
       "Evidence gathering",
       "Scratchpad technique",
     ],
-    prerequisites: ["using-examples-few-shot"],
+    prerequisites: ["using-examples-ch07"],
     lessonContent: `
 ## Why Claude Hallucinates
 
@@ -566,7 +566,7 @@ say "Not found in the document."
     `,
     exercises: [
       {
-        id: "8.1",
+        id: "correcting-false-ex15",
         title: "Correcting a False Premise",
         description:
           'Fix a hallucination issue by giving Claude an out. The question claims Renaissance is Beyoncé\'s eighth studio album — but it\'s actually her seventh.',
@@ -582,7 +582,7 @@ say "Not found in the document."
           "Answer the following question. If the question contains a factual error or false premise, correct it before answering. Do not accept incorrect claims as true.\n\nQuestion: What was the critical reception of Renaissance, Beyoncé's eighth studio album?",
       },
       {
-        id: "8.2",
+        id: "citation-based-ex16",
         title: "Citation-Based Answers",
         description:
           "Use the scratchpad technique to make Claude extract quotes from a document before answering, reducing hallucination risk.",
@@ -598,7 +598,7 @@ say "Not found in the document."
           'Read the document below carefully.\n\n<document>\n{DOCUMENT_TEXT}\n</document>\n\nQuestion: How much did Matterport\'s subscriber base grow?\n\nFirst, in <quotes> tags, extract the most relevant passages from the document that relate to this question. Then, in <answer> tags, answer the question based ONLY on the extracted quotes. If the quotes don\'t contain enough information to answer, say "Not found in the document."',
       },
       {
-        id: "8.3",
+        id: "detecting-unanswerable-ex17",
         title: "Detecting Unanswerable Questions",
         description:
           "Write a prompt that correctly identifies when a specific piece of information is not available in the provided document.",
@@ -616,7 +616,7 @@ say "Not found in the document."
     ],
   },
   {
-    slug: "complex-prompts",
+    id: "building-complex-ch09",
     title: "Building Complex Prompts",
     difficulty: "advanced",
     concepts: [
@@ -624,7 +624,7 @@ say "Not found in the document."
       "Production-grade prompting",
       "Industry-specific applications",
     ],
-    prerequisites: ["avoiding-hallucinations"],
+    prerequisites: ["avoiding-hallucinations-ch08"],
     lessonContent: `
 ## Combining Everything
 
@@ -657,7 +657,7 @@ Start simple, then layer:
     `,
     exercises: [
       {
-        id: "9.1",
+        id: "customer-service-ex18",
         title: "Customer Service Chatbot",
         description:
           "Build a complete system prompt for a customer service chatbot that combines techniques from all previous chapters.",
@@ -674,7 +674,7 @@ Start simple, then layer:
           'System prompt:\n"You are a friendly, professional customer support agent for TechGadgets Inc. You help customers with product questions, complaints, and billing issues.\n\nWhen responding to a customer:\n1. First, identify the type of inquiry in <classification> tags: product_question, complaint, billing, or other.\n2. Think through your response in <thinking> tags, considering what information you need and what policies apply.\n3. Provide your response in <response> tags using a warm, professional tone.\n\nRules:\n- Only reference products and policies from the <product_catalog> and <policies> sections below.\n- If you don\'t have enough information to help, say so honestly and offer to escalate.\n- Never make up product features, prices, or policies.\n- For complaints about defective items, always offer a replacement or refund per our policy.\n\n<product_catalog>\n{CATALOG}\n</product_catalog>\n\n<policies>\n{POLICIES}\n</policies>"',
       },
       {
-        id: "9.2",
+        id: "legal-document-ex19",
         title: "Legal Document Analyzer",
         description:
           "Build a production-grade prompt for legal document analysis that extracts key information and flags risks.",
@@ -691,7 +691,7 @@ Start simple, then layer:
           'System prompt:\n"You are a legal document analyst. You help users understand contracts by extracting key information and flagging potential concerns. You are NOT a lawyer and your analysis is NOT legal advice — always recommend consulting a qualified attorney for legal decisions."\n\nUser prompt:\nAnalyze the following contract. For each section, extract the relevant information and wrap it in the specified XML tags.\n\n<contract>\n{CONTRACT_TEXT}\n</contract>\n\nProvide your analysis in this structure:\n<analysis>\n  <parties>[List all parties and their roles]</parties>\n  <key_terms>[Key dates, durations, renewal terms]</key_terms>\n  <obligations>[What each party must do]</obligations>\n  <risks>[Potential risks, unusual clauses, or red flags — quote the specific language]</risks>\n  <summary>[2-3 sentence plain-English summary]</summary>\n</analysis>\n\nFor <risks>, quote the exact contract language that concerns you and explain why in plain English. If no risks are apparent, say so.',
       },
       {
-        id: "9.3",
+        id: "financial-report-ex20",
         title: "Financial Report Analyzer",
         description:
           "Build a complex prompt for financial analysis that extracts metrics and provides structured summaries.",
@@ -708,7 +708,7 @@ Start simple, then layer:
           'System prompt:\n"You are a senior financial analyst. You extract and analyze financial data with precision. Always show your calculations step-by-step. Never estimate or round unless explicitly asked. If a number is not clearly stated in the source document, say \'not stated\' rather than calculating or guessing."\n\nUser prompt:\nAnalyze the following financial report.\n\n<report>\n{REPORT_TEXT}\n</report>\n\nProvide your analysis:\n1. In <extraction> tags, pull out all key financial metrics (revenue, profit, margins, growth rates) with exact figures and page/section references.\n2. In <calculations> tags, show step-by-step work for any derived metrics (YoY growth, margin percentages, etc.).\n3. In <summary> tags, provide a 3-5 sentence executive summary.\n4. In <caveats> tags, note any data gaps, assumptions, or figures you could not verify.\n\nIMPORTANT: Do not fabricate any numbers. If a metric is not in the document, explicitly state it is missing.',
       },
       {
-        id: "9.4",
+        id: "coding-assistant-ex21",
         title: "Coding Assistant",
         description:
           "Build a prompt for a coding assistant that debugs code, explains errors, and suggests fixes with well-formatted output.",
@@ -729,11 +729,11 @@ Start simple, then layer:
 
   // ─── APPENDICES ────────────────────────────────────────
   {
-    slug: "chaining-prompts",
+    id: "chaining-prompts-ch10",
     title: "Chaining Prompts",
     difficulty: "advanced",
     concepts: ["Multi-step prompt chains", "Output-to-input piping", "Task decomposition"],
-    prerequisites: ["complex-prompts"],
+    prerequisites: ["building-complex-ch09"],
     lessonContent: `
 ## Breaking Complex Tasks into Steps
 
@@ -768,7 +768,7 @@ Step 3: Summarize the timeline into a narrative paragraph.
     `,
     exercises: [
       {
-        id: "A1.1",
+        id: "three-step-analysis-ex22",
         title: "Three-Step Analysis Chain",
         description:
           "Design a multi-step prompt chain where each step feeds into the next.",
@@ -787,11 +787,11 @@ Step 3: Summarize the timeline into a narrative paragraph.
     ],
   },
   {
-    slug: "tool-use",
+    id: "tool-use-ch11",
     title: "Tool Use (Function Calling)",
     difficulty: "advanced",
     concepts: ["Tool/function definitions", "Structured tool inputs", "Tool result handling"],
-    prerequisites: ["complex-prompts"],
+    prerequisites: ["building-complex-ch09"],
     lessonContent: `
 ## Giving Claude Tools
 
@@ -831,7 +831,7 @@ Claude can call external tools (functions) when given their definitions. This le
     `,
     exercises: [
       {
-        id: "A2.1",
+        id: "defining-tools-ex23",
         title: "Defining and Using Tools",
         description:
           "Define one or more tools and write a prompt that causes Claude to call the correct tool with appropriate parameters.",
@@ -850,11 +850,11 @@ Claude can call external tools (functions) when given their definitions. This le
     ],
   },
   {
-    slug: "search-and-retrieval",
+    id: "search-retrieval-ch12",
     title: "Search & Retrieval (RAG)",
     difficulty: "advanced",
     concepts: ["RAG patterns", "Context injection", "Document grounding"],
-    prerequisites: ["avoiding-hallucinations"],
+    prerequisites: ["avoiding-hallucinations-ch08"],
     lessonContent: `
 ## Retrieval-Augmented Generation
 
@@ -896,7 +896,7 @@ Cite your sources. If the documents don't contain the answer, say so.
     `,
     exercises: [
       {
-        id: "A3.1",
+        id: "rag-prompt-ex24",
         title: "RAG Prompt with Citations",
         description:
           "Write a prompt that takes retrieved document chunks as context and answers a user question grounded in that context, with citations.",
@@ -916,18 +916,72 @@ Cite your sources. If the documents don't contain the answer, say so.
   },
 ];
 
-export function getChapter(slug: string): Chapter | undefined {
-  return chapters.find((c) => c.slug === slug);
+export function getChapter(chapterId: string): Chapter | undefined {
+  return chapters.find((chapter) => chapter.id === chapterId);
 }
 
 export function getExercise(
-  chapterSlug: string,
+  chapterId: string,
   exerciseId: string
 ): { chapter: Chapter; exercise: Exercise } | undefined {
-  const chapter = getChapter(chapterSlug);
+  const chapter = getChapter(chapterId);
   if (!chapter) return undefined;
   const exercise = chapter.exercises.find((e) => e.id === exerciseId);
   if (!exercise) return undefined;
   return { chapter, exercise };
+}
+
+export function getFirstExercise(chapterId: string): Exercise | undefined {
+  return getChapter(chapterId)?.exercises[0];
+}
+
+export function getChapterIndex(chapterId: string): number {
+  return chapters.findIndex((chapter) => chapter.id === chapterId);
+}
+
+export function getAdjacentChapter(
+  chapterId: string,
+  direction: "previous" | "next"
+): Chapter | null {
+  const chapterIndex = getChapterIndex(chapterId);
+  if (chapterIndex === -1) return null;
+
+  const offset = direction === "previous" ? -1 : 1;
+  return chapters[chapterIndex + offset] ?? null;
+}
+
+export function getAdjacentExercise(
+  chapterId: string,
+  exerciseId: string,
+  direction: "previous" | "next"
+): { chapter: Chapter; exercise: Exercise } | null {
+  const chapterIndex = getChapterIndex(chapterId);
+  if (chapterIndex === -1) return null;
+
+  const chapter = chapters[chapterIndex];
+  const exerciseIndex = chapter.exercises.findIndex(
+    (exercise) => exercise.id === exerciseId
+  );
+  if (exerciseIndex === -1) return null;
+
+  const exerciseOffset = direction === "previous" ? -1 : 1;
+  const sameChapterExercise = chapter.exercises[exerciseIndex + exerciseOffset];
+  if (sameChapterExercise) {
+    return { chapter, exercise: sameChapterExercise };
+  }
+
+  const nextChapter = chapters[chapterIndex + exerciseOffset];
+  if (!nextChapter) {
+    return null;
+  }
+
+  const boundaryExercise =
+    direction === "previous"
+      ? nextChapter.exercises[nextChapter.exercises.length - 1]
+      : nextChapter.exercises[0];
+
+  return boundaryExercise
+    ? { chapter: nextChapter, exercise: boundaryExercise }
+    : null;
 }
 

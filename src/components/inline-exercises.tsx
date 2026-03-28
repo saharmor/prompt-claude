@@ -1,216 +1,188 @@
 "use client";
 
-import { useState, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
-import { ExerciseRunner } from "@/components/exercise-runner";
-import { Button } from "@/components/ui/button";
+import { getLearnChapterPath, getLearnExercisePath } from "@/lib/content-paths";
 import {
-  getAttempt,
+  getChapterProgress,
   subscribeToProgressStorage,
 } from "@/lib/progress/storage";
 import type { Exercise } from "@/lib/curriculum/schema";
 
 interface Props {
   exercises: Exercise[];
-  chapterSlug: string;
-  nextChapterSlug?: string;
+  chapterId: string;
+  nextChapterId?: string;
   nextChapterTitle?: string;
+}
+
+function serializeProgress(snapshot: {
+  completed: number;
+  total: number;
+  allPassed: boolean;
+  completedIds: string[];
+}) {
+  return [
+    snapshot.completed,
+    snapshot.total,
+    snapshot.allPassed ? "1" : "0",
+    snapshot.completedIds.join(","),
+  ].join("|");
 }
 
 export function InlineExercises({
   exercises,
-  chapterSlug,
-  nextChapterSlug,
+  chapterId,
+  nextChapterId,
   nextChapterTitle,
 }: Props) {
-  const scopeKey = useMemo(
-    () => `${chapterSlug}:${exercises.map((exercise) => exercise.id).join("|")}`,
-    [chapterSlug, exercises]
+  const exerciseIds = useMemo(
+    () => exercises.map((exercise) => exercise.id),
+    [exercises]
   );
-  const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  const getPassedIds = useCallback(() => {
-    const passed: string[] = [];
-    for (const ex of exercises) {
-      const attempt = getAttempt(chapterSlug, ex.id);
-      if (attempt?.passed) passed.push(ex.id);
-    }
-
-    return passed;
-  }, [exercises, chapterSlug]);
-
-  const passedIdList = useSyncExternalStore(
-    useCallback((callback) => subscribeToProgressStorage(callback), []),
-    getPassedIds,
-    () => []
+  const getProgressSnapshot = useCallback(() => {
+    return getChapterProgress(chapterId, exerciseIds);
+  }, [chapterId, exerciseIds]);
+  const progressSnapshotRaw = useSyncExternalStore(
+    subscribeToProgressStorage,
+    () => serializeProgress(getProgressSnapshot()),
+    () => serializeProgress(getProgressSnapshot())
   );
-  const passedIds = useMemo(() => new Set(passedIdList), [passedIdList]);
-  const autoOpenIndex = useMemo(() => {
-    const firstIncomplete = exercises.findIndex((ex) => !passedIds.has(ex.id));
-    return firstIncomplete === -1 ? null : firstIncomplete;
-  }, [exercises, passedIds]);
-  const [openOverride, setOpenOverride] = useState<{
-    scopeKey: string;
-    value: number | null;
-  } | null>(null);
-  const openIndex =
-    openOverride?.scopeKey === scopeKey ? openOverride.value : autoOpenIndex;
+  const progressSnapshot = useMemo(() => {
+    const [completedRaw, totalRaw, allPassedRaw, completedIdsRaw = ""] =
+      progressSnapshotRaw.split("|");
 
-  const setOpenIndex = useCallback(
-    (value: number | null) => {
-      setOpenOverride({ scopeKey, value });
-    },
-    [scopeKey]
-  );
+    return {
+      completed: Number(completedRaw),
+      total: Number(totalRaw),
+      allPassed: allPassedRaw === "1",
+      completedIds: completedIdsRaw ? completedIdsRaw.split(",") : [],
+    };
+  }, [progressSnapshotRaw]);
+  const completedIds = useMemo(() => {
+    return new Set(progressSnapshot.completedIds);
+  }, [progressSnapshot.completedIds]);
+  const nextUpId = useMemo(() => {
+    return (
+      exercises.find((exercise) => !completedIds.has(exercise.id))?.id ?? null
+    );
+  }, [completedIds, exercises]);
+  const nextChapterPath = nextChapterId
+    ? getLearnChapterPath(nextChapterId)
+    : null;
 
-  const openExercise = useCallback((index: number) => {
-    setOpenIndex(index);
-    const el = exerciseRefs.current[index];
-    if (!el) return;
-
-    const y = el.getBoundingClientRect().top + window.scrollY - 80;
-    window.scrollTo({ top: y, behavior: "smooth" });
-  }, [setOpenIndex]);
-
-  const completedCount = passedIds.size;
-  const total = exercises.length;
-  const allDone = completedCount === total;
+  if (exercises.length === 0) {
+    return null;
+  }
 
   return (
-    <div>
-      {/* Section header + progress */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
+    <div className="space-y-5">
+      <div>
+        <div className="mb-3 flex items-center justify-between">
           <h2 className="text-xl font-semibold">Practice What You Learned</h2>
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {completedCount}/{total} completed
+          <span className="text-sm tabular-nums text-muted-foreground">
+            {progressSnapshot.completed}/{progressSnapshot.total} completed
           </span>
         </div>
-        <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <div className="h-2 overflow-hidden rounded-full bg-muted">
           <div
             className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
-            style={{ width: `${total > 0 ? (completedCount / total) * 100 : 0}%` }}
+            style={{
+              width: `${
+                progressSnapshot.total > 0
+                  ? (progressSnapshot.completed / progressSnapshot.total) * 100
+                  : 0
+              }%`,
+            }}
           />
         </div>
       </div>
 
-      {/* Exercise accordion */}
-      <div className="flex flex-col gap-3">
-        {exercises.map((exercise, idx) => {
-          const isPassed = passedIds.has(exercise.id);
-          const isOpen = openIndex === idx;
-          const nextExercise = idx < exercises.length - 1 ? exercises[idx + 1] : null;
+      <div className="grid gap-3">
+        {exercises.map((exercise, index) => {
+          const isComplete = completedIds.has(exercise.id);
+          const isNextUp = nextUpId === exercise.id;
 
           return (
-            <div
+            <Link
               key={exercise.id}
-              ref={(el) => {
-                exerciseRefs.current[idx] = el;
-              }}
-              className={`rounded-lg border overflow-hidden transition-colors ${
-                isPassed
-                  ? "border-success/30"
-                  : isOpen
-                    ? "border-primary/40"
-                    : "border-border"
-              } bg-card`}
+              href={getLearnExercisePath(chapterId, exercise.id)}
+              className={`group flex items-start gap-4 rounded-xl border p-4 transition-colors ${
+                isComplete
+                  ? "border-success/30 bg-success/5 hover:border-success/50"
+                  : isNextUp
+                    ? "border-primary/40 bg-primary/5 hover:border-primary/60"
+                    : "border-border bg-card hover:border-primary/30 hover:bg-accent/20"
+              }`}
             >
-              {/* Header / trigger */}
-              <button
-                onClick={() => setOpenIndex(isOpen ? null : idx)}
-                className="flex w-full items-center gap-3 p-4 text-left hover:bg-accent/40 transition-colors"
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                  isComplete
+                    ? "bg-success text-white"
+                    : isNextUp
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                }`}
               >
-                {isPassed ? (
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-success text-white text-xs font-bold">
-                    &#10003;
-                  </span>
-                ) : (
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
-                    {idx + 1}
-                  </span>
-                )}
-
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium">{exercise.title}</h3>
-                  {!isOpen && (
-                    <p className="mt-0.5 text-sm text-muted-foreground line-clamp-1">
-                      {exercise.description}
-                    </p>
-                  )}
+                {isComplete ? "\u2713" : index + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="font-medium transition-colors group-hover:text-primary">
+                    {exercise.title}
+                  </h3>
+                  {isComplete ? (
+                    <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">
+                      Complete
+                    </span>
+                  ) : null}
+                  {!isComplete && isNextUp ? (
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      Next up
+                    </span>
+                  ) : null}
                 </div>
-
-                <ChevronDown
-                  className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
-                    isOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {/* Expanded content */}
-              {isOpen && (
-                <div className="border-t border-border px-4 pb-5 pt-4">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {exercise.description}
-                  </p>
-
-                  <div className="mb-5">
-                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-                      Your Task
-                    </h4>
-                    <p className="text-sm leading-relaxed">{exercise.task}</p>
-                  </div>
-
-                  <ExerciseRunner
-                    key={`${chapterSlug}/${exercise.id}`}
-                    exercise={exercise}
-                    chapterSlug={chapterSlug}
-                  />
-
-                  {isPassed && nextExercise && (
-                    <div className="mt-5 flex items-center justify-between gap-3 rounded-lg border border-success/20 bg-success/5 p-3">
-                      <p className="text-sm text-success">
-                        Passed. Next: <strong>{nextExercise.title}</strong>
-                      </p>
-                      <Button size="sm" onClick={() => openExercise(idx + 1)}>
-                        Next Exercise &rarr;
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  {exercise.description}
+                </p>
+                <p className="mt-3 text-sm font-medium text-primary">
+                  {isComplete
+                    ? "Review exercise"
+                    : isNextUp
+                      ? progressSnapshot.completed === 0
+                        ? "Start exercise"
+                        : "Resume exercise"
+                      : "Open exercise"}
+                </p>
+              </div>
+            </Link>
           );
         })}
       </div>
 
-      {/* Completion / next chapter */}
-      {allDone && (
-        <div className="mt-8 flex flex-col items-center gap-3 rounded-lg border border-success/30 bg-success/5 p-6 text-center">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-success text-white text-lg font-bold">
+      {progressSnapshot.allPassed ? (
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-success/30 bg-success/5 p-6 text-center">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-success text-lg font-bold text-white">
             &#10003;
           </span>
-          <p className="font-semibold text-success">
-            All exercises complete!
-          </p>
-          {nextChapterSlug && nextChapterTitle && (
+          <p className="font-semibold text-success">All exercises complete!</p>
+          {nextChapterPath && nextChapterTitle ? (
             <Link
-              href={`/learn/${nextChapterSlug}`}
+              href={nextChapterPath}
               className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Continue to {nextChapterTitle} &rarr;
             </Link>
-          )}
-          {!nextChapterSlug && (
+          ) : (
             <Link
               href="/learn"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+              className="text-sm text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
             >
               Back to curriculum
             </Link>
           )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

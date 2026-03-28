@@ -3,17 +3,17 @@
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { chapters } from "@/lib/curriculum/data";
+import {
+  getLearnChapterPath,
+  getLearnExercisePath,
+} from "@/lib/content-paths";
 import { trackEvent } from "@/lib/analytics";
 import {
   loadProgress,
   subscribeToProgressStorage,
 } from "@/lib/progress/storage";
 
-const orderedChapters = [
-  ...chapters.filter((c) => c.difficulty === "beginner"),
-  ...chapters.filter((c) => c.difficulty === "intermediate"),
-  ...chapters.filter((c) => c.difficulty === "advanced"),
-];
+const orderedChapters = chapters;
 
 function subscribeToProgress(callback: () => void) {
   return subscribeToProgressStorage(callback);
@@ -32,12 +32,12 @@ function resolveLearnHref(
     };
   }
 
-  // Resume at the chapter that contains the first incomplete exercise.
+  // Resume at the first incomplete exercise.
   for (const chapter of orderedChapters) {
     for (const exercise of chapter.exercises) {
-      if (!data.attempts[`${chapter.slug}/${exercise.id}`]?.passed) {
+      if (!data.attempts[`${chapter.id}/${exercise.id}`]?.passed) {
         return {
-          href: `/learn/${chapter.slug}`,
+          href: getLearnExercisePath(chapter.id, exercise.id),
           hasProgress: true,
         };
       }
@@ -67,7 +67,9 @@ export function SmartLearnLink({
   className,
   startLabel = "Start Learning",
   resumeLabel = "Resume Learning",
-  startHref = orderedChapters.length > 0 ? `/learn/${orderedChapters[0].slug}` : "/learn",
+  startHref = orderedChapters.length > 0
+    ? getLearnChapterPath(orderedChapters[0].id)
+    : "/learn",
   analyticsPlacement = "unknown",
 }: Props) {
   const resolvedSnapshot = useSyncExternalStore(

@@ -14,6 +14,7 @@ import { PromptEditor } from "@/components/practice/prompt-editor";
 import { PracticeSessionHeader } from "@/components/practice/practice-session-header";
 import { PracticeSetupPanel } from "@/components/practice/practice-setup-panel";
 import { RunPanel } from "@/components/practice/run-panel";
+import { getPracticeProblemPath } from "@/lib/content-paths";
 import {
   loadPracticeWorkspace,
   savePracticeWorkspace,
@@ -588,7 +589,7 @@ export function Simulator({ initialProblemId }: { initialProblemId: string }) {
     }
 
     if (problemId !== initialProblemId) {
-      router.push(`/practice/${problemId}`);
+      router.push(getPracticeProblemPath(problemId));
     }
   }
 

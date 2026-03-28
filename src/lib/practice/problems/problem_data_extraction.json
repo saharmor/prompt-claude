@@ -1,5 +1,5 @@
 {
-  "id": "329b3272",
+  "id": "structured-data-p05",
   "title": "Structured Data Extraction",
   "description": "You are writing the full prompt for a model that receives messy vendor invoice text. The model must extract the important fields into a strict JSON object. The hidden evaluator cares about schema compliance, normalized values, and whether missing fields are represented consistently rather than hallucinated.",
   "input_format": "The input is raw OCR-like invoice text. Values may appear out of order, contain noise, or include multiple line items.",

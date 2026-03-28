@@ -57,7 +57,16 @@ function mergeSeedProblems(existingProblems: Problem[]) {
   const seedById = new Map(seedProblems.map((problem) => [problem.id, problem]));
   let changed = false;
 
-  const mergedProblems = existingProblems.map((problem) => {
+  const existingSeedCompatibleProblems = existingProblems.filter((problem) => {
+    const keepProblem = problem.created_by_user || seedById.has(problem.id);
+    if (!keepProblem) {
+      changed = true;
+    }
+
+    return keepProblem;
+  });
+
+  const mergedProblems = existingSeedCompatibleProblems.map((problem) => {
     const seedProblem = seedById.get(problem.id);
     if (!seedProblem) {
       return problem;

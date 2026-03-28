@@ -4,6 +4,7 @@ import { chapters } from "@/lib/curriculum/data";
 import { Badge } from "@/components/ui/badge";
 import { ChapterProgress } from "@/components/chapter-progress";
 import { ShareCard } from "@/components/share-card";
+import { getLearnChapterPath } from "@/lib/content-paths";
 import {
   createMetadata,
   getCurriculumDescription,
@@ -50,7 +51,7 @@ export default function LearnPage() {
   // Pre-compute a stable 1-based index for each chapter to avoid mutating state inside JSX
   const allChaptersInOrder = sections.flatMap((s) => grouped[s.key]);
   const chapterIndexMap = new Map(
-    allChaptersInOrder.map((c, i) => [c.slug, i + 1])
+    allChaptersInOrder.map((chapter, index) => [chapter.id, index + 1])
   );
 
   return (
@@ -92,12 +93,12 @@ export default function LearnPage() {
             <div className="flex flex-col gap-3">
               {grouped[section.key].map((chapter) => (
                   <Link
-                    key={chapter.slug}
-                    href={`/learn/${chapter.slug}`}
+                    key={chapter.id}
+                    href={getLearnChapterPath(chapter.id)}
                     className="group flex items-start gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-accent/40"
                   >
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                      {chapterIndexMap.get(chapter.slug)}
+                      {chapterIndexMap.get(chapter.id)}
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -111,7 +112,7 @@ export default function LearnPage() {
                           {chapter.difficulty}
                         </Badge>
                         <ChapterProgress
-                          chapterSlug={chapter.slug}
+                          chapterId={chapter.id}
                           exerciseIds={chapter.exercises.map((e) => e.id)}
                         />
                       </div>
@@ -121,17 +122,6 @@ export default function LearnPage() {
                       <p className="mt-1 text-xs text-muted-foreground">
                         {chapter.exercises.length}{" "}
                         {chapter.exercises.length === 1 ? "exercise" : "exercises"}
-                        {chapter.prerequisites && chapter.prerequisites.length > 0 && (
-                          <span className="ml-2 text-muted-foreground/60">
-                            · Recommended after:{" "}
-                            {chapter.prerequisites
-                              .map(
-                                (slug) =>
-                                  chapters.find((c) => c.slug === slug)?.title ?? slug
-                              )
-                              .join(", ")}
-                          </span>
-                        )}
                       </p>
                     </div>
                   </Link>

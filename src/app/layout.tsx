@@ -5,6 +5,7 @@ import { Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { NavBar } from "@/components/nav-bar";
 import { chapters } from "@/lib/curriculum/data";
+import { getLearnChapterPath } from "@/lib/content-paths";
 
 import {
   siteAuthor,
@@ -25,7 +26,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const firstChapterHref = chapters[0] ? `/learn/${chapters[0].slug}` : "/learn";
+const firstChapterHref = chapters[0]
+  ? getLearnChapterPath(chapters[0].id)
+  : "/learn";
 
 const footerSections = [
   {
@@ -201,6 +204,17 @@ export default function RootLayout({
                 >
                   {siteAuthor}
                 </a>
+                .{" "}
+                <a
+                  href="https://github.com/saharmor/prompt-claude"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Prompt Claude source code on GitHub (opens in a new tab)"
+                  className="underline underline-offset-2 transition-colors hover:text-foreground"
+                >
+                  Open source on GitHub
+                </a>
+                .
               </p>
               <p>Independent project. Not affiliated with Anthropic.</p>
             </div>

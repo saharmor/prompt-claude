@@ -2,7 +2,7 @@ import type { GradeResult } from "@/lib/curriculum/schema";
 
 export interface ExerciseAttempt {
   exerciseId: string;
-  chapterSlug: string;
+  chapterId: string;
   passed: boolean;
   score: number;
   submittedAt: string;
@@ -15,4 +15,4 @@ export interface ProgressData {
   submittedPrompts: Record<string, string>;
 }
 
-export const CURRENT_VERSION = 1;
+export const CURRENT_VERSION = 2;

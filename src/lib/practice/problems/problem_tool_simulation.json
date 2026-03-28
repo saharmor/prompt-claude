@@ -1,5 +1,5 @@
 {
-  "id": "6365b238",
+  "id": "agent-tool-p07",
   "title": "Agent Tool-Calling Simulation",
   "description": "Create a prompt that turns the model into a lightweight planning agent. The model will receive a user request plus a small tool catalog and should decide what tool call to make before returning a final answer. This mirrors interview questions where structure, explicit planning, and clean tool arguments matter more than writing code.",
   "input_format": "The input includes a user request and a fixed tool catalog. The model should not invent tools that are not in the catalog.",

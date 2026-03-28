@@ -8,7 +8,7 @@ import { hydrateRunResult } from "@/lib/practice/utils";
 
 export const PRACTICE_STORAGE_KEY = "promptcraft_practice";
 export const PRACTICE_CHANGE_EVENT = "promptcraft-practice-change";
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 const LEGACY_DRAFTS_KEY = "prompt-simulator-drafts";
 const LEGACY_DRAFT_TIMESTAMPS_KEY = "prompt-simulator-draft-timestamps";
 const LEGACY_EXAM_KEY = "prompt-simulator-exam";

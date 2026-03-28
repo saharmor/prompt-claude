@@ -26,23 +26,23 @@ import { ShareButtons, totalExercises, totalChapters } from "@/components/share-
 import { trackEvent, trackEventOnce } from "@/lib/analytics";
 
 const allChaptersForCompletion = chapters.map((ch) => ({
-  slug: ch.slug,
+  id: ch.id,
   exerciseIds: ch.exercises.map((e) => e.id),
 }));
-const chapterExerciseIdsBySlug = new Map(
+const chapterExerciseIdsById = new Map(
   chapters.map((chapter) => [
-    chapter.slug,
+    chapter.id,
     chapter.exercises.map((exercise) => exercise.id),
   ])
 );
 
 interface Props {
   exercise: Exercise;
-  chapterSlug: string;
+  chapterId: string;
 }
 
-export function ExerciseRunner({ exercise, chapterSlug }: Props) {
-  const exerciseKey = `${chapterSlug}/${exercise.id}`;
+export function ExerciseRunner({ exercise, chapterId }: Props) {
+  const exerciseKey = `${chapterId}/${exercise.id}`;
   const [prompt, setPrompt] = useState(exercise.starterPrompt ?? "");
   const [isGrading, setIsGrading] = useState(false);
   const [result, setResult] = useState<GradeResult | null>(null);
@@ -54,10 +54,10 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
   const pendingSubmitAfterSettingsRef = useRef(false);
 
   useEffect(() => {
-    const savedPrompt = getSubmittedPrompt(chapterSlug, exercise.id);
+    const savedPrompt = getSubmittedPrompt(chapterId, exercise.id);
     setPrompt(savedPrompt ?? exercise.starterPrompt ?? "");
 
-    const prev = getAttempt(chapterSlug, exercise.id);
+    const prev = getAttempt(chapterId, exercise.id);
     if (prev) {
       setLastAttemptPassed(prev.passed);
       setResult(prev.result ?? null);
@@ -65,7 +65,7 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
       setLastAttemptPassed(null);
       setResult(null);
     }
-  }, [chapterSlug, exercise.id, exercise.starterPrompt]);
+  }, [chapterId, exercise.id, exercise.starterPrompt]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -108,14 +108,14 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
         return;
       }
 
-      saveSubmittedPrompt(chapterSlug, exercise.id, prompt);
+      saveSubmittedPrompt(chapterId, exercise.id, prompt);
 
       const res = await fetch("/api/grade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           exerciseId: exercise.id,
-          chapterSlug,
+          chapterId,
           userPrompt: prompt,
           apiKey,
         }),
@@ -130,18 +130,18 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
       setResult(data);
       setLastAttemptPassed(data.passed);
 
-      const chapterExerciseIds = chapterExerciseIdsBySlug.get(chapterSlug) ?? [
+      const chapterExerciseIds = chapterExerciseIdsById.get(chapterId) ?? [
         exercise.id,
       ];
       const chapterProgressBefore = getChapterProgress(
-        chapterSlug,
+        chapterId,
         chapterExerciseIds
       );
       const wasCourseComplete = isAllComplete(allChaptersForCompletion);
 
       saveAttempt({
         exerciseId: exercise.id,
-        chapterSlug,
+        chapterId,
         passed: data.passed,
         score: data.score,
         submittedAt: new Date().toISOString(),
@@ -153,10 +153,10 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
         passed: data.passed,
       });
 
-      const chapterProgressAfter = getChapterProgress(chapterSlug, chapterExerciseIds);
+      const chapterProgressAfter = getChapterProgress(chapterId, chapterExerciseIds);
       if (!chapterProgressBefore.allPassed && chapterProgressAfter.allPassed) {
         trackEvent("chapter_completed", {
-          chapter_slug: chapterSlug,
+          chapter_id: chapterId,
         });
       }
 
@@ -169,7 +169,7 @@ export function ExerciseRunner({ exercise, chapterSlug }: Props) {
     } finally {
       setIsGrading(false);
     }
-  }, [chapterSlug, exercise.id, exerciseKey, prompt]);
+  }, [chapterId, exercise.id, exerciseKey, prompt]);
 
   useEffect(() => {
     async function handleSettingsChange(event: Event) {

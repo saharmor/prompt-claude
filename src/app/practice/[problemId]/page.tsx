@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Simulator } from "@/components/practice/simulator";
-import { getSeedProblems } from "@/lib/practice/problems";
+import { getPracticeProblemPath } from "@/lib/content-paths";
+import { loadProblems } from "@/lib/practice/storage";
 import { createMetadata, siteName } from "@/lib/site-metadata";
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { problemId } = await params;
-  const problems = getSeedProblems();
+  const problems = await loadProblems();
   const problem = problems.find((entry) => entry.id === problemId);
 
   if (!problem) {
@@ -25,13 +26,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return createMetadata({
     title: `${problem.title} | Practice | ${siteName}`,
     description: problem.description,
-    path: `/practice/${problem.id}`,
+    path: getPracticeProblemPath(problem.id),
   });
 }
 
 export default async function PracticeProblemPage({ params }: Props) {
   const { problemId } = await params;
-  const problems = getSeedProblems();
+  const problems = await loadProblems();
   const problem = problems.find((entry) => entry.id === problemId);
 
   if (!problem) {

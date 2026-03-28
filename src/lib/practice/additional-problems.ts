@@ -2,7 +2,7 @@ import { DEFAULT_INPUT_WRAPPER_TEMPLATE } from "@/lib/practice/types";
 
 export const sampleProblemRecords = [
   {
-    id: "sample-beginner-01",
+    id: "summarize-product-p01",
     title: "Summarize a Product Review",
     difficulty: "beginner",
     description:
@@ -106,7 +106,7 @@ The reviewer returned the ClimaSmart Hub after one week due to unreliable Wi-Fi 
     is_sample: true,
   },
   {
-    id: "sample-intermediate-01",
+    id: "compare-options-p02",
     title: "Compare Two Options With Trade-offs",
     difficulty: "intermediate",
     description:
@@ -279,7 +279,7 @@ Our priorities: we manage complex multi-week projects with dependencies, we heav
     is_sample: true,
   },
   {
-    id: "sample-advanced-01",
+    id: "multi-step-p03",
     title: "Multi-Step Research Plan",
     difficulty: "advanced",
     description:
@@ -470,7 +470,7 @@ Focus areas: Regulatory requirements (especially around e-invoicing mandates), c
 
 export const additionalProblemRecords = [
   {
-    id: "3a7d0922",
+    id: "action-items-p08",
     title: "Action Items From Meeting Notes",
     difficulty: "beginner",
     description:
@@ -667,7 +667,7 @@ The retro covered the March 24 payment-service outage caused by a misconfigured 
     created_by_user: false,
   },
   {
-    id: "97f543a7",
+    id: "support-ticket-p09",
     title: "Support Ticket Triage JSON",
     difficulty: "beginner",
     description:
@@ -807,7 +807,7 @@ Sandra Park, IT Admin`,
     created_by_user: false,
   },
   {
-    id: "aed1b8f3",
+    id: "policy-grounded-p10",
     title: "Policy-Grounded Support Answer",
     difficulty: "beginner",
     description:
@@ -957,7 +957,7 @@ Policy excerpts:
     created_by_user: false,
   },
   {
-    id: "a6b2b11e",
+    id: "call-summary-p11",
     title: "Call Summary With Risks",
     difficulty: "intermediate",
     description:
@@ -1133,7 +1133,7 @@ QBR with Pinnacle Retail Group ($340K ARR, renewal in September) revealed signif
     created_by_user: false,
   },
   {
-    id: "a8b4a84e",
+    id: "clarifying-questions-p12",
     title: "Clarifying Questions First",
     difficulty: "intermediate",
     description:
@@ -1255,7 +1255,7 @@ I would start by reviewing a recent copy of the finished report and mapping the 
     created_by_user: false,
   },
   {
-    id: "946780ca",
+    id: "tone-rewrite-p13",
     title: "Tone Rewrite With Guardrails",
     difficulty: "intermediate",
     description:
@@ -1383,7 +1383,7 @@ Would either of these options work for your team? We'd like to help resolve this
     created_by_user: false,
   },
   {
-    id: "bcfea821",
+    id: "contradiction-detection-p14",
     title: "Contradiction Detection Matrix",
     difficulty: "intermediate",
     description:
@@ -1601,7 +1601,7 @@ Source B:
     created_by_user: false,
   },
   {
-    id: "5e817a4c",
+    id: "multi-source-p15",
     title: "Multi-Source Executive Brief",
     difficulty: "advanced",
     description:
@@ -1744,7 +1744,7 @@ DOC-C: Procurement can issue the PO once security signs off.`,
     created_by_user: false,
   },
   {
-    id: "e94ad055",
+    id: "analyst-query-p16",
     title: "Analyst Query Plan",
     difficulty: "advanced",
     description:
@@ -1950,7 +1950,7 @@ Schema:
     created_by_user: false,
   },
   {
-    id: "1d18acee",
+    id: "rubric-based-p17",
     title: "Rubric-Based Response Judge",
     difficulty: "advanced",
     description:

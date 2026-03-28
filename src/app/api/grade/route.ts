@@ -7,11 +7,11 @@ import { MAX_PROMPT_LENGTH } from "@/lib/anthropic/config";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { exerciseId, chapterSlug, userPrompt, apiKey } = body;
+    const { exerciseId, chapterId, userPrompt, apiKey } = body;
 
-    if (!exerciseId || !chapterSlug || !userPrompt || !apiKey) {
+    if (!exerciseId || !chapterId || !userPrompt || !apiKey) {
       return NextResponse.json(
-        { error: "Missing required fields: exerciseId, chapterSlug, userPrompt, apiKey" },
+        { error: "Missing required fields: exerciseId, chapterId, userPrompt, apiKey" },
         { status: 400 }
       );
     }
@@ -30,10 +30,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = getExercise(chapterSlug, exerciseId);
+    const result = getExercise(chapterId, exerciseId);
     if (!result) {
       return NextResponse.json(
-        { error: `Exercise not found: ${chapterSlug}/${exerciseId}` },
+        { error: `Exercise not found: ${chapterId}/${exerciseId}` },
         { status: 404 }
       );
     }

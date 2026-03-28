@@ -1,5 +1,5 @@
 {
-  "id": "76eaebf2",
+  "id": "structured-reasoning-p06",
   "title": "Structured Reasoning With Evidence",
   "description": "Design a prompt that receives a customer support incident timeline and makes the model analyze the likely root cause without guessing. The response should separate evidence, reasoning, and conclusion clearly: include quoted evidence from the timeline, a reasoning section that explains how the evidence supports the conclusion, and a final answer with the most likely root cause, confidence level, and next action.",
   "input_format": "The input is a chronological incident log with timestamps, status changes, and support notes.",

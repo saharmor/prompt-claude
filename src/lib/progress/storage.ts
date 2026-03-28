@@ -8,8 +8,8 @@ const progressStore = createBrowserStore(
   PROGRESS_CHANGE_EVENT
 );
 
-function getExerciseKey(chapterSlug: string, exerciseId: string): string {
-  return `${chapterSlug}/${exerciseId}`;
+function getExerciseKey(chapterId: string, exerciseId: string): string {
+  return `${chapterId}/${exerciseId}`;
 }
 
 function createEmpty(): ProgressData {
@@ -39,7 +39,7 @@ export function loadProgress(): ProgressData {
 
 export function saveAttempt(attempt: ExerciseAttempt): void {
   const data = loadProgress();
-  const key = getExerciseKey(attempt.chapterSlug, attempt.exerciseId);
+  const key = getExerciseKey(attempt.chapterId, attempt.exerciseId);
 
   data.attempts[key] = attempt;
 
@@ -47,58 +47,68 @@ export function saveAttempt(attempt: ExerciseAttempt): void {
 }
 
 export function getAttempt(
-  chapterSlug: string,
+  chapterId: string,
   exerciseId: string
 ): ExerciseAttempt | null {
   const data = loadProgress();
-  return data.attempts[getExerciseKey(chapterSlug, exerciseId)] ?? null;
+  return data.attempts[getExerciseKey(chapterId, exerciseId)] ?? null;
 }
 
 export function saveSubmittedPrompt(
-  chapterSlug: string,
+  chapterId: string,
   exerciseId: string,
   prompt: string
 ): void {
   const data = loadProgress();
-  data.submittedPrompts[getExerciseKey(chapterSlug, exerciseId)] = prompt;
+  data.submittedPrompts[getExerciseKey(chapterId, exerciseId)] = prompt;
   saveProgress(data);
 }
 
 export function getSubmittedPrompt(
-  chapterSlug: string,
+  chapterId: string,
   exerciseId: string
 ): string | null {
   const data = loadProgress();
-  return data.submittedPrompts[getExerciseKey(chapterSlug, exerciseId)] ?? null;
+  return data.submittedPrompts[getExerciseKey(chapterId, exerciseId)] ?? null;
 }
 
 export function getChapterProgress(
-  chapterSlug: string,
+  chapterId: string,
   exerciseIds: string[]
-): { completed: number; total: number; allPassed: boolean } {
+): {
+  completed: number;
+  total: number;
+  allPassed: boolean;
+  completedIds: string[];
+} {
   const data = loadProgress();
   let completed = 0;
+  const completedIds: string[] = [];
 
   for (const id of exerciseIds) {
-    const attempt = data.attempts[getExerciseKey(chapterSlug, id)];
-    if (attempt?.passed) completed++;
+    const attempt = data.attempts[getExerciseKey(chapterId, id)];
+    if (attempt?.passed) {
+      completed++;
+      completedIds.push(id);
+    }
   }
 
   return {
     completed,
     total: exerciseIds.length,
     allPassed: completed === exerciseIds.length,
+    completedIds,
   };
 }
 
 export function isAllComplete(
-  chapters: { slug: string; exerciseIds: string[] }[]
+  chapters: { id: string; exerciseIds: string[] }[]
 ): boolean {
   const data = loadProgress();
 
   for (const ch of chapters) {
     for (const id of ch.exerciseIds) {
-      const attempt = data.attempts[getExerciseKey(ch.slug, id)];
+      const attempt = data.attempts[getExerciseKey(ch.id, id)];
       if (!attempt?.passed) return false;
     }
   }

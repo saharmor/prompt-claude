@@ -10,7 +10,7 @@ import { chapters } from "@/lib/curriculum/data";
 import { ShareButtons, totalExercises, totalChapters } from "@/components/share-buttons";
 
 const allChapters = chapters.map((chapter) => ({
-  slug: chapter.slug,
+  id: chapter.id,
   exerciseIds: chapter.exercises.map((exercise) => exercise.id),
 }));
 

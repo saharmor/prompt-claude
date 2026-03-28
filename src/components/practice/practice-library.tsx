@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getPracticeProblemPath } from "@/lib/content-paths";
 import {
   PRACTICE_DIFFICULTIES,
   type PracticeDifficulty,
@@ -113,7 +114,7 @@ export function PracticeLibrary({ problems }: PracticeLibraryProps) {
               {group.problems.map((problem) => (
                 <Link
                   key={problem.id}
-                  href={`/practice/${problem.id}`}
+                  href={getPracticeProblemPath(problem.id)}
                   className={`group rounded-2xl border p-5 shadow-sm transition-colors hover:border-primary/35 hover:bg-accent/30 ${
                     problem.is_sample
                       ? "border-amber-500/30 bg-amber-500/5"
