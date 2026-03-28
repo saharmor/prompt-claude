@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PracticeLibrary } from "@/components/practice/practice-library";
-import { loadProblems } from "@/lib/practice/storage";
+import { getSeedProblems } from "@/lib/practice/problems";
 import { createMetadata, siteName } from "@/lib/site-metadata";
 
 export const metadata: Metadata = createMetadata({
@@ -10,8 +10,8 @@ export const metadata: Metadata = createMetadata({
   path: "/practice",
 });
 
-export default async function PracticePage() {
-  const problems = await loadProblems();
+export default function PracticePage() {
+  const problems = getSeedProblems();
   const libraryProblems = problems.map((problem) => ({
     id: problem.id,
     title: problem.title,

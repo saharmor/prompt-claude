@@ -88,12 +88,17 @@ function mergeSeedProblems(existingProblems: Problem[]) {
 }
 
 export async function loadProblems(): Promise<Problem[]> {
-  await ensureDataRoot();
+  try {
+    await ensureDataRoot();
+  } catch {
+    return getSeedProblems();
+  }
+
   const raw = await readJsonFile<unknown>(problemsPath);
 
   if (raw.status === "missing") {
     const seeded = getSeedProblems();
-    await saveProblems(seeded);
+    try { await saveProblems(seeded); } catch { /* read-only fs */ }
     return seeded;
   }
 
@@ -103,7 +108,7 @@ export async function loadProblems(): Promise<Problem[]> {
 
   const merged = mergeSeedProblems(raw.value.map((problem) => hydrateProblem(problem)));
   if (merged.changed) {
-    await saveProblems(merged.problems);
+    try { await saveProblems(merged.problems); } catch { /* read-only fs */ }
   }
 
   return merged.problems;

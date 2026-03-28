@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Simulator } from "@/components/practice/simulator";
-import { loadProblems } from "@/lib/practice/storage";
+import { getSeedProblems } from "@/lib/practice/problems";
 import { createMetadata, siteName } from "@/lib/site-metadata";
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { problemId } = await params;
-  const problems = await loadProblems();
+  const problems = getSeedProblems();
   const problem = problems.find((entry) => entry.id === problemId);
 
   if (!problem) {
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PracticeProblemPage({ params }: Props) {
   const { problemId } = await params;
-  const problems = await loadProblems();
+  const problems = getSeedProblems();
   const problem = problems.find((entry) => entry.id === problemId);
 
   if (!problem) {
