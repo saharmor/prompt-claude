@@ -204,7 +204,7 @@ export default function RootLayout({
                 >
                   {siteAuthor}
                 </a>
-                .{" "}Open source on{" "}
+                .{" "}Open sourced on{" "}
                 <a
                   href="https://github.com/saharmor/prompt-claude"
                   target="_blank"
