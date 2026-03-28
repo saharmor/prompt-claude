@@ -9,13 +9,13 @@ export function NavBar() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: "/learn", label: "Curriculum" },
+    { href: "/learn", label: "Learn" },
     { href: "/practice", label: "Practice" },
   ];
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-sm">
-      <nav className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4">
+      <nav className="mx-auto flex h-14 w-full max-w-[1440px] items-center justify-between px-4">
         <Link
           href="/"
           className="flex items-center gap-2 font-semibold text-foreground"

@@ -65,6 +65,23 @@ export default function LearnPage() {
 
       <ShareCard />
 
+      <Link
+        href="/practice"
+        className="group flex items-start gap-4 rounded-lg border border-primary/30 bg-primary/5 p-4 transition-colors hover:border-primary/60 hover:bg-primary/10"
+      >
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+          &rarr;
+        </span>
+        <div>
+          <h3 className="font-medium group-hover:text-primary transition-colors">
+            Practice Simulator
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Ready to go beyond guided exercises? Tackle open-ended problems with hidden test cases, timed drills, and coaching hints.
+          </p>
+        </div>
+      </Link>
+
       <div id="curriculum" className="flex flex-col gap-12">
         {sections.map((section) => (
           <div key={section.key}>

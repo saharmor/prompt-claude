@@ -38,15 +38,9 @@ const footerSections = [
         external: false,
       },
       {
-        href: "/learn#curriculum",
-        label: "Curriculum",
-        description: "Browse all chapters, exercises, and difficulty levels.",
-        external: false,
-      },
-      {
         href: "/practice",
-        label: "Practice",
-        description: "Use the prompt simulator to test open-ended prompts and hidden checks.",
+        label: "Practice Simulator",
+        description: "Open-ended prompt challenges with hidden checks and coaching hints.",
         external: false,
       },
     ],
@@ -64,6 +58,18 @@ const footerSections = [
         href: "https://sidekickdev.com",
         label: "✨ Sidekick Dev",
         description: "Generate context files for Cursor, Claude Code, and more.",
+        external: true,
+      },
+      {
+        href: "https://github.com/saharmor/wispr-action",
+        label: "🎙️ Wispr Action",
+        description: "Turn your perfectly transcribed speech into real-world actions.",
+        external: true,
+      },
+      {
+        href: "https://github.com/saharmor/EchoScribe",
+        label: "📝 EchoScribe",
+        description: "Local AI transcription workspace with cloud or local Whisper models.",
         external: true,
       },
     ],
@@ -124,7 +130,7 @@ export default function RootLayout({
         <NavBar />
         <main className="flex-1">{children}</main>
         <footer className="border-t border-border bg-card/60">
-          <div className="mx-auto grid w-full max-w-5xl gap-10 px-4 py-12 md:grid-cols-[1.6fr_repeat(2,minmax(0,1fr))]">
+          <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 md:grid-cols-[1.2fr_0.8fr_2fr]">
             <div className="space-y-5">
               <Link
                 href="/"
@@ -146,7 +152,7 @@ export default function RootLayout({
                 <h2 className="text-sm font-semibold text-foreground">
                   {section.title}
                 </h2>
-                <ul className="space-y-3">
+                <ul className={`grid gap-3 ${section.links.length > 2 ? "grid-cols-2" : "grid-cols-1"}`}>
                   {section.links.map((link) => (
                     <li key={link.href}>
                       {link.external ? (

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { chapters } from "@/lib/curriculum/data";
+import { getSeedProblems } from "@/lib/practice/problems";
 import {
   createMetadata,
   siteDescription,
@@ -12,6 +13,7 @@ import { SmartLearnLink } from "@/components/smart-learn-link";
 const stats = {
   chapters: chapters.length,
   exercises: chapters.reduce((sum, ch) => sum + ch.exercises.length, 0),
+  practiceProblems: getSeedProblems().length,
 };
 
 export const metadata: Metadata = createMetadata({
@@ -46,16 +48,16 @@ export default function Home() {
               Anthropic&apos;s prompt engineering tutorial
             </a>
           </p>
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-wrap gap-3 pt-2">
             <SmartLearnLink
               className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
               analyticsPlacement="hero"
             />
             <Link
-              href="/learn#curriculum"
+              href="/practice"
               className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted"
             >
-              View Curriculum
+              Practice Simulator
             </Link>
           </div>
         </div>
@@ -98,6 +100,52 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Practice Simulator */}
+      <section className="w-full border-b border-border bg-card">
+        <div className="mx-auto max-w-5xl px-4 py-16">
+          <div className="mb-10 text-center">
+            <h2 className="text-2xl font-semibold">Practice Simulator</h2>
+            <p className="mt-2 text-muted-foreground">
+              Go beyond guided exercises. Write prompts from scratch, test them against hidden checks, and get coaching hints.
+            </p>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-3">
+            {[
+              {
+                title: "Open-Ended Problems",
+                body: "Tackle realistic prompt challenges across beginner, intermediate, and advanced difficulty levels.",
+              },
+              {
+                title: "Hidden Test Cases",
+                body: "Your prompt is evaluated against inputs you haven't seen, so you know it generalizes.",
+              },
+              {
+                title: "Coaching Hints",
+                body: "Stuck? Request an AI-generated hint for any check without revealing the full answer.",
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="flex flex-col gap-2 rounded-lg border border-border bg-background p-5"
+              >
+                <h3 className="text-sm font-semibold">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {item.body}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Link
+              href="/practice"
+              className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+            >
+              Open Practice Simulator
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Stats */}
       <section className="w-full border-y border-border bg-muted/50">
         <div className="mx-auto flex max-w-4xl items-center justify-center gap-12 px-4 py-10 text-center">
@@ -107,11 +155,11 @@ export default function Home() {
           </div>
           <div>
             <p className="text-3xl font-bold text-primary">{stats.exercises}</p>
-            <p className="text-sm text-muted-foreground">Exercises</p>
+            <p className="text-sm text-muted-foreground">Guided Exercises</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-primary">3</p>
-            <p className="text-sm text-muted-foreground">Difficulty Levels</p>
+            <p className="text-3xl font-bold text-primary">{stats.practiceProblems}</p>
+            <p className="text-sm text-muted-foreground">Practice Problems</p>
           </div>
         </div>
       </section>
@@ -122,13 +170,20 @@ export default function Home() {
         <p className="mb-6 text-muted-foreground">
           All you need is an Anthropic API key. The course is free and open-source. Jump into any chapter at your own pace.
         </p>
-        <SmartLearnLink
-          className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
-          startLabel="Browse the Curriculum"
-          resumeLabel="Resume Learning"
-          startHref="/learn#curriculum"
-          analyticsPlacement="footer_cta"
-        />
+        <div className="flex flex-wrap justify-center gap-3">
+          <SmartLearnLink
+            className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+            startLabel="Start Learning"
+            resumeLabel="Resume Learning"
+            analyticsPlacement="footer_cta"
+          />
+          <Link
+            href="/practice"
+            className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted"
+          >
+            Practice Simulator
+          </Link>
+        </div>
       </section>
     </div>
   );
