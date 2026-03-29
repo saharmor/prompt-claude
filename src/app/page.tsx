@@ -35,7 +35,7 @@ export default function Home() {
             Master Prompting with Claude
           </h1>
           <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
-          Hands-on exercises with instant AI feedback, whether you&apos;re preparing for a role at Anthropic or just want to get more out of Claude.
+          Hands-on exercises with instant AI feedback to get more out of Claude.
           </p>
           <p className="text-sm text-muted-foreground">
             Based on{" "}
@@ -45,7 +45,7 @@ export default function Home() {
               rel="noopener noreferrer"
               className="underline underline-offset-2 hover:text-foreground transition-colors"
             >
-              Anthropic&apos;s prompt engineering tutorial
+              Anthropic&apos;s popular prompt engineering tutorial
             </a>
           </p>
           <div className="flex flex-wrap gap-3 pt-2">

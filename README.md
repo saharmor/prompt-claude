@@ -23,7 +23,7 @@ An interactive web app to sharpen your Claude prompt engineering skills, with gu
 
 ## What It Is
 
-[Prompt Claude](https://promptclaude.dev) is a self-paced prompt engineering course inspired by Anthropic's own tutorial material, rebuilt as a proper web app. Work through 24 exercises across 12 chapters — from basic message structure to advanced hallucination prevention and multi-technique prompts. Each submission is graded live by Claude Sonnet using your own API key, with specific feedback on what worked and what to improve.
+[Prompt Claude](https://promptclaude.dev) is a self-paced prompt engineering course inspired by Anthropic's own popular tutorial material, rebuilt as a proper web app. Work through 24 exercises across 12 chapters — from basic message structure to advanced hallucination prevention and multi-technique prompts. Each submission is graded live by Claude Sonnet using your own API key, with specific feedback on what worked and what to improve.
 
 ## What You Get
 
